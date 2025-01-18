@@ -140,6 +140,25 @@ function Counter() {
 }
 ```
 
+### usePrevious Hook
+
+```tsx
+import { usePrevious } from '@paulgeorge35/hooks';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  const previousCount = usePrevious(count);
+
+  return (
+    <div>
+      <p>Current count: {count}</p>
+      <p>Previous count: {previousCount ?? 'No previous value'}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
 ### useWindowSize Hook
 
 ```typescript
@@ -151,6 +170,17 @@ function Component() {
   return <div>Window size: {width} x {height}</div>;
 }
 ```
+
+#### Use Cases
+- Comparing previous and current values to trigger side effects
+- Implementing undo functionality
+- Tracking value changes in animations
+- Form state management
+
+#### Notes
+- Returns `undefined` on the first render
+- Updates only after the component has rendered with a new value
+- Preserves value type safety through TypeScript generics
 
 ## TypeScript Support
 
