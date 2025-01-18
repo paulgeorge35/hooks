@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-export type UseBoolean = [boolean, UseBooleanActions];
+export type UseBoolean = UseBooleanActions & { value: boolean };
 
 export type UseBooleanActions = {
     setValue: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,5 +27,5 @@ export const useBoolean = (initialValue = false): UseBoolean => {
 
     const actions = useMemo(() => ({ setValue, toggle, setTrue, setFalse }), [toggle, setTrue, setFalse]);
 
-    return useMemo(() => [value, actions] as UseBoolean, [actions, value]);
+    return useMemo(() => ({ value, ...actions }) as UseBoolean, [actions, value]);
 }; 

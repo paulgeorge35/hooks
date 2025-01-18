@@ -19,6 +19,7 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 - `useDebounce`: Debounce rapidly changing values
 - `useLocalStorage`: Persist state in localStorage with type safety
 - `useMediaQuery`: React to CSS media query changes
+- `useNumber`: Manage numeric values with increment, decrement, and constraints
 - `usePrevious`: Access the previous value of a state or prop
 - `useWindowSize`: Track window dimensions reactively
 
@@ -26,23 +27,38 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 
 - React 16.8+ (Hooks support)
 - TypeScript 4.x+ (for type definitions)
-- npm or yarn package manager
+- npm or bun package manager
 
 ## Installation
 
-You can install the hooks library using npm or yarn:
+Before installing, you need to configure your package manager to access the GitHub Packages registry.
+
+### Via bun
+
+1. Create or edit `$HOME/.bunfig.toml` and add:
+```toml
+[install.scopes]
+"@paulgeorge35" = { token = "${GITHUB_TOKEN}", url = "https://npm.pkg.github.com/" }
+```
+
+2. Install the package:
+```bash
+bun add @paulgeorge35/hooks@latest
+```
 
 ### Via npm
 
-```bash
-npm install https://github.com/paulgeorge35/hooks
+1. Create or edit `~/.npmrc` and add:
+```
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
-### Via yarn
-
+2. Install the package:
 ```bash
-yarn add https://github.com/paulgeorge35/hooks
+npm install @paulgeorge35/hooks@latest
 ```
+
+> Note: Make sure to replace `${GITHUB_TOKEN}` with a GitHub Personal Access Token that has the `read:packages` permission.
 
 ## Usage
 
@@ -52,10 +68,10 @@ yarn add https://github.com/paulgeorge35/hooks
 import { useBoolean } from '@paulgeorge35/hooks';
 
 function Component() {
-  const { value, toggle, setTrue, setFalse } = useBoolean(false);
+  const boolean = useBoolean(false);
   
   return (
-    <button onClick={toggle}>
+    <button onClick={boolean.toggle}>
       {value ? 'On' : 'Off'}
     </button>
   );
@@ -96,6 +112,31 @@ function ResponsiveComponent() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   
   return isMobile ? <MobileView /> : <DesktopView />;
+}
+```
+
+### useNumber Hook
+
+```typescript
+import { useNumber } from '@paulgeorge35/hooks';
+
+function Counter() {
+  const counter = useNumber(0, {
+    min: -10,
+    max: 10,
+    step: 2,
+    loop: false
+  });
+  
+  return (
+    <div>
+      <p>Count: {counter.value}</p>
+      <button onClick={() => counter.increase()}>+2</button>
+      <button onClick={() => counter.increase(5)}>+5</button>
+      <button onClick={() => counter.decrease()}>-2</button>
+      <button onClick={counter.reset}>Reset</button>
+    </div>
+  );
 }
 ```
 
