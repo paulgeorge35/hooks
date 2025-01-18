@@ -196,8 +196,18 @@ The library is written in TypeScript and includes comprehensive type definitions
 
 ## Dependencies
 
-This library has zero external dependencies and only requires React as a peer dependency:
-- `react` (^16.8.0): React library with hooks support
+##### 1. Peer Dependencies
+- `react` `(^19.0.0)`: React library with hooks support
+
+##### 2. Development Dependencies (mostly for testing purposes)
+- `@happy-dom/global-registrator` `(^16.6.0)`: DOM environment for testing
+- `@testing-library/react` `(^16.2.0)`: React testing utilities
+- `@testing-library/react-hooks` `(^8.0.1)`: React hooks testing utilities
+- `jsdom` `(^26.0.0)`: DOM environment for testing
+- `react` `(^19.0.0)`: React development dependency
+- `react-dom` `(^19.0.0)`: React DOM development dependency
+- `rimraf` `(^6.0.1)`: Cross-platform rm -rf utility
+- `typescript` `(^5.7.3)`: TypeScript compiler and types
 
 ## License
 
