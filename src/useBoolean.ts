@@ -1,21 +1,39 @@
 import { useCallback, useMemo, useState } from 'react';
 
-export type UseBoolean = UseBooleanActions & { value: boolean };
+export type UseBoolean = UseBooleanActions & { 
+    /** The current boolean value */
+    value: boolean 
+};
 
 export type UseBooleanActions = {
+    /** Function to set the boolean value directly */
     setValue: React.Dispatch<React.SetStateAction<boolean>>;
+    /** Function to toggle the boolean value */
     toggle: () => void;
+    /** Function to set the boolean value to true */
     setTrue: () => void;
+    /** Function to set the boolean value to false */
     setFalse: () => void;
 }
 
 /**
- * A hook that manages boolean state with convenient toggle, on, and off functions
- * @param {boolean} [initialValue=false] - The initial boolean value (defaults to false)
+ * A hook that manages boolean state with convenient toggle and set functions
+ * 
+ * @param initialValue - The initial boolean value (defaults to false)
  * @returns An object containing the boolean value and functions to manipulate it
+ * 
  * @example
  * ```tsx
  * const { value, toggle, setTrue, setFalse } = useBoolean(false);
+ * 
+ * return (
+ *   <div>
+ *     <p>Current value: {value ? 'True' : 'False'}</p>
+ *     <button onClick={toggle}>Toggle</button>
+ *     <button onClick={setTrue}>Set True</button>
+ *     <button onClick={setFalse}>Set False</button>
+ *   </div>
+ * );
  * ```
  */
 export const useBoolean = (initialValue = false): UseBoolean => {
