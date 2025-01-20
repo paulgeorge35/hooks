@@ -24,6 +24,5 @@ jobs:
       with:
         minor-wording: feat,minor
         major-wording: BREAKING CHANGE,major
-        skip-tag: true
         skip-commit: true
           
