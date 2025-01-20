@@ -7,5 +7,6 @@ export { useLocalStorage } from './useLocalStorage';
 export { useMediaQuery } from './useMediaQuery';
 export { useNumber, type UseNumber, type UseNumberActions, type UseNumberProps } from './useNumber';
 export { usePrevious } from './usePrevious';
+export { useStepper, type UseStepper, type UseStepperActions, type UseStepperOptions } from './useStepper';
 export { useWindowSize, type WindowSize } from './useWindowSize';
 
