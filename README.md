@@ -24,6 +24,8 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 - `useMediaQuery`: React to CSS media query changes
 - `useNumber`: Manage numeric values with increment, decrement, and constraints
 - `usePrevious`: Access the previous value of a state or prop
+- `useStepper`: Manage a stepper with customizable steps and actions
+- `useWebSocket`: Manage WebSocket connections with automatic reconnection
 - `useWindowSize`: Track window dimensions reactively
 
 ## Prerequisites
@@ -222,6 +224,100 @@ function Counter() {
       <p>Current count: {count}</p>
       <p>Previous count: {previousCount ?? 'No previous value'}</p>
       <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+### useStepper Hook
+
+```typescript
+import { useStepper } from '@paulgeorge35/hooks';
+
+function WizardComponent() {
+  const {
+    currentStep,
+    totalSteps,
+    nextStep,
+    previousStep,
+    goToStep,
+    isFirstStep,
+    isLastStep
+  } = useStepper({
+    initialStep: 0,
+    totalSteps: 3
+  });
+
+  return (
+    <div>
+      <p>Step {currentStep + 1} of {totalSteps}</p>
+      {currentStep === 0 && <StepOne />}
+      {currentStep === 1 && <StepTwo />}
+      {currentStep === 2 && <StepThree />}
+      
+      <div>
+        <button disabled={isFirstStep} onClick={previousStep}>
+          Previous
+        </button>
+        <button disabled={isLastStep} onClick={nextStep}>
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### useWebSocket Hook
+
+```typescript
+import { useWebSocket } from '@paulgeorge35/hooks';
+
+type ChatMessage = {
+  text: string;
+  timestamp: number;
+};
+
+function ChatComponent() {
+  const {
+    send,
+    messages,
+    status,
+    connect,
+    disconnect,
+    clearMessages,
+    lastError
+  } = useWebSocket<ChatMessage>({
+    url: 'wss://chat.example.com',
+    options: {
+      autoConnect: true,
+      reconnect: true,
+      reconnectInterval: 5000,
+      maxRetries: 3,
+      onMessage: (msg) => console.log('New message:', msg),
+      onError: (error) => console.error('WebSocket error:', error)
+    }
+  });
+
+  return (
+    <div>
+      <p>Connection status: {status}</p>
+      {lastError && <p>Error: {lastError.message}</p>}
+      
+      <div>
+        {messages.map((msg, index) => (
+          <div key={index}>
+            {msg.text} - {new Date(msg.timestamp).toLocaleString()}
+          </div>
+        ))}
+      </div>
+
+      <button onClick={() => send({ text: 'Hello!', timestamp: Date.now() })}>
+        Send Message
+      </button>
+      <button onClick={disconnect}>Disconnect</button>
+      <button onClick={connect}>Reconnect</button>
+      <button onClick={clearMessages}>Clear History</button>
     </div>
   );
 }
