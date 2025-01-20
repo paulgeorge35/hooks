@@ -16,7 +16,10 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 ## Hooks
 
 - `useBoolean`: Toggle boolean states with predefined actions
+- `useClickOutside`: Detect clicks outside a specified element
+- `useCopyToClipboard`: Copy text to clipboard with success state
 - `useDebounce`: Debounce rapidly changing values
+- `useFocus`: Track focus state of DOM elements
 - `useLocalStorage`: Persist state in localStorage with type safety
 - `useMediaQuery`: React to CSS media query changes
 - `useNumber`: Manage numeric values with increment, decrement, and constraints
@@ -78,6 +81,47 @@ function Component() {
 }
 ```
 
+### useClickOutside Hook
+
+```typescript
+import { useClickOutside } from '@paulgeorge35/hooks';
+
+function Modal() {
+  const handleClickOutside = () => {
+    // Close the modal when clicking outside
+    setIsOpen(false);
+  };
+
+  const modalRef = useClickOutside({ callback: handleClickOutside });
+  
+  return (
+    <div ref={modalRef} className="modal">
+      Modal content that can be closed by clicking outside
+    </div>
+  );
+}
+```
+
+### useCopyToClipboard Hook
+
+```typescript
+import { useCopyToClipboard } from '@paulgeorge35/hooks';
+
+function ShareComponent() {
+  const { copied, copy } = useCopyToClipboard();
+  const textToCopy = "Hello, World!";
+  
+  return (
+    <div>
+      <button onClick={() => copy(textToCopy)}>
+        {copied ? 'Copied!' : 'Copy Text'}
+      </button>
+      <p>Share this text: {textToCopy}</p>
+    </div>
+  );
+}
+```
+
 ### useDebounce Hook
 
 ```typescript
@@ -88,6 +132,30 @@ function SearchComponent() {
   const debouncedSearch = useDebounce(search, 500);
   
   // debouncedSearch will update only after 500ms of no changes
+}
+```
+
+### useFocus Hook
+
+```typescript
+import { useFocus } from '@paulgeorge35/hooks';
+
+function InputComponent() {
+  const inputRef = useRef<HTMLDivElement>(null);
+  const { isFocused } = useFocus({
+    ref: inputRef,
+    onFocus: () => console.log('Input focused'),
+    onBlur: () => console.log('Input blurred')
+  });
+  
+  return (
+    <div>
+      <div ref={inputRef} tabIndex={0}>
+        {isFocused ? 'Focused!' : 'Click to focus'}
+      </div>
+      <p>Focus status: {isFocused ? 'Focused' : 'Not focused'}</p>
+    </div>
+  );
 }
 ```
 
