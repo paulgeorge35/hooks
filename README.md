@@ -23,7 +23,9 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 - `useLocalStorage`: Persist state in localStorage with type safety
 - `useMediaQuery`: React to CSS media query changes
 - `useNumber`: Manage numeric values with increment, decrement, and constraints
+- `usePasswordStrength`: Calculate password strength and criteria
 - `usePrevious`: Access the previous value of a state or prop
+- `useQueue`: Manage a queue with enqueue, dequeue, and reset operations
 - `useStepper`: Manage a stepper with customizable steps and actions
 - `useWebSocket`: Manage WebSocket connections with automatic reconnection
 - `useWindowSize`: Track window dimensions reactively
@@ -210,6 +212,65 @@ function Counter() {
 }
 ```
 
+### usePasswordStrength Hook
+
+```typescript
+import { usePasswordStrength } from '@paulgeorge35/hooks';
+
+function PasswordForm() {
+  const [password, setPassword] = useState('');
+  const { strength, criteria, score } = usePasswordStrength(password, {
+    minLength: 10,
+    requireSpecialChar: true,
+    requireNumber: true,
+    requireMixedCase: true
+  });
+
+  const getStrengthColor = () => {
+    switch (strength) {
+      case 'weak': return 'red';
+      case 'medium': return 'orange';
+      case 'strong': return 'green';
+      case 'very-strong': return 'darkgreen';
+      default: return 'gray';
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Enter password"
+      />
+      
+      <div style={{ color: getStrengthColor() }}>
+        Password Strength: {strength} ({score}%)
+      </div>
+
+      <div className="criteria-list">
+        <div>
+          Length (min 10): {criteria.minLength ? '✅' : '❌'}
+        </div>
+        <div>
+          Uppercase: {criteria.hasUpperCase ? '✅' : '❌'}
+        </div>
+        <div>
+          Lowercase: {criteria.hasLowerCase ? '✅' : '❌'}
+        </div>
+        <div>
+          Number: {criteria.hasNumber ? '✅' : '❌'}
+        </div>
+        <div>
+          Special Character: {criteria.hasSpecialChar ? '✅' : '❌'}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
 ### usePrevious Hook
 
 ```tsx
@@ -224,6 +285,51 @@ function Counter() {
       <p>Current count: {count}</p>
       <p>Previous count: {previousCount ?? 'No previous value'}</p>
       <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+### useQueue Hook
+
+```typescript
+import { useQueue } from '@paulgeorge35/hooks';
+
+function TaskManager() {
+  const { queue, enqueue, dequeue, reset } = useQueue<{
+    id: number;
+    task: string;
+    priority: 'high' | 'medium' | 'low';
+  }>([]);
+  
+  const addTask = () => {
+    enqueue({
+      id: Date.now(),
+      task: 'New Task',
+      priority: 'medium'
+    });
+  };
+
+  return (
+    <div>
+      <h2>Task Queue ({queue.length})</h2>
+      
+      <div className="task-list">
+        {queue.map((item) => (
+          <div key={item.id} className={`task-item ${item.priority}`}>
+            <span>{item.task}</span>
+            <span className="priority">{item.priority}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="controls">
+        <button onClick={addTask}>Add Task</button>
+        <button onClick={dequeue} disabled={queue.length === 0}>
+          Process Next Task
+        </button>
+        <button onClick={reset}>Clear All Tasks</button>
+      </div>
     </div>
   );
 }
@@ -349,14 +455,6 @@ function Component() {
 ## TypeScript Support
 
 The library is written in TypeScript and includes comprehensive type definitions. All hooks are fully typed and provide excellent IDE support.
-
-## Browser Support
-
-- Chrome 51+
-- Firefox 54+
-- Safari 10+
-- Edge 15+
-- IE 11 (with appropriate polyfills)
 
 ## Dependencies
 
