@@ -12,15 +12,12 @@ jobs:
 
     - name: ⬇️ Checkout repo
       uses: actions/checkout@v4
-
+      
     - name: ⏫ Bumping version
-      uses: jpb06/bump-package@latest
+      uses: phips28/gh-action-bump-version@v11.0.4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        cwd: .
-        major-keywords: BREAKING CHANGE
-        minor-keywords: feat,minor
-        patch-keywords: fix,chore
-        should-default-to-patch: true
-        commit-user: Paul George
-        commit-user-email: paultibulca@gmail.com
-        debug: true
+        minor-wording: feat,minor
+        major-wording: BREAKING CHANGE,major
+          
