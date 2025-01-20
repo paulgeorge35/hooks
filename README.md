@@ -229,6 +229,51 @@ function Counter() {
 }
 ```
 
+### useQueue Hook
+
+```typescript
+import { useQueue } from '@paulgeorge35/hooks';
+
+function TaskManager() {
+  const { queue, enqueue, dequeue, reset } = useQueue<{
+    id: number;
+    task: string;
+    priority: 'high' | 'medium' | 'low';
+  }>([]);
+  
+  const addTask = () => {
+    enqueue({
+      id: Date.now(),
+      task: 'New Task',
+      priority: 'medium'
+    });
+  };
+
+  return (
+    <div>
+      <h2>Task Queue ({queue.length})</h2>
+      
+      <div className="task-list">
+        {queue.map((item) => (
+          <div key={item.id} className={`task-item ${item.priority}`}>
+            <span>{item.task}</span>
+            <span className="priority">{item.priority}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="controls">
+        <button onClick={addTask}>Add Task</button>
+        <button onClick={dequeue} disabled={queue.length === 0}>
+          Process Next Task
+        </button>
+        <button onClick={reset}>Clear All Tasks</button>
+      </div>
+    </div>
+  );
+}
+```
+
 ### useStepper Hook
 
 ```typescript
