@@ -1,8 +1,9 @@
 name: Publish to GitHub Packages
 
 on:
-  release:
-    types: [created]
+  workflow_run:
+    workflows: [version-bump]
+    types: [completed]
 
 jobs:
   build:

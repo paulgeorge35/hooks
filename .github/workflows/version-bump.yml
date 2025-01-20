@@ -1,0 +1,22 @@
+name: ⚡ Package version bump
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  bump:
+    name: 🆕 Version bump
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: ⬇️ Checkout repo
+      uses: actions/checkout@v4
+
+    - name: ⏫ Bumping version
+      uses: jpb06/bump-package@latest
+      with:
+        major-keywords: BREAKING CHANGE
+        minor-keywords: feat,minor
+        patch-keywords: fix,chore
+        should-default-to-patch: true
