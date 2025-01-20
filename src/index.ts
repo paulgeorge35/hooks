@@ -6,6 +6,7 @@ export { useFocus, type UseFocus, type UseFocusProps } from './useFocus';
 export { useLocalStorage } from './useLocalStorage';
 export { useMediaQuery } from './useMediaQuery';
 export { useNumber, type UseNumber, type UseNumberActions, type UseNumberProps } from './useNumber';
+export { usePasswordStrength, type PasswordCriteria, type PasswordStrength, type PasswordStrengthOptions, type UsePasswordStrength } from './usePasswordStrength';
 export { usePrevious } from './usePrevious';
 export { useQueue, type UseQueue } from './useQueue';
 export { useStepper, type UseStepper, type UseStepperActions, type UseStepperOptions } from './useStepper';

@@ -23,7 +23,9 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 - `useLocalStorage`: Persist state in localStorage with type safety
 - `useMediaQuery`: React to CSS media query changes
 - `useNumber`: Manage numeric values with increment, decrement, and constraints
+- `usePasswordStrength`: Calculate password strength and criteria
 - `usePrevious`: Access the previous value of a state or prop
+- `useQueue`: Manage a queue with enqueue, dequeue, and reset operations
 - `useStepper`: Manage a stepper with customizable steps and actions
 - `useWebSocket`: Manage WebSocket connections with automatic reconnection
 - `useWindowSize`: Track window dimensions reactively
@@ -205,6 +207,65 @@ function Counter() {
       <button onClick={() => counter.increase(5)}>+5</button>
       <button onClick={() => counter.decrease()}>-2</button>
       <button onClick={counter.reset}>Reset</button>
+    </div>
+  );
+}
+```
+
+### usePasswordStrength Hook
+
+```typescript
+import { usePasswordStrength } from '@paulgeorge35/hooks';
+
+function PasswordForm() {
+  const [password, setPassword] = useState('');
+  const { strength, criteria, score } = usePasswordStrength(password, {
+    minLength: 10,
+    requireSpecialChar: true,
+    requireNumber: true,
+    requireMixedCase: true
+  });
+
+  const getStrengthColor = () => {
+    switch (strength) {
+      case 'weak': return 'red';
+      case 'medium': return 'orange';
+      case 'strong': return 'green';
+      case 'very-strong': return 'darkgreen';
+      default: return 'gray';
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Enter password"
+      />
+      
+      <div style={{ color: getStrengthColor() }}>
+        Password Strength: {strength} ({score}%)
+      </div>
+
+      <div className="criteria-list">
+        <div>
+          Length (min 10): {criteria.minLength ? '✅' : '❌'}
+        </div>
+        <div>
+          Uppercase: {criteria.hasUpperCase ? '✅' : '❌'}
+        </div>
+        <div>
+          Lowercase: {criteria.hasLowerCase ? '✅' : '❌'}
+        </div>
+        <div>
+          Number: {criteria.hasNumber ? '✅' : '❌'}
+        </div>
+        <div>
+          Special Character: {criteria.hasSpecialChar ? '✅' : '❌'}
+        </div>
+      </div>
     </div>
   );
 }
@@ -394,14 +455,6 @@ function Component() {
 ## TypeScript Support
 
 The library is written in TypeScript and includes comprehensive type definitions. All hooks are fully typed and provide excellent IDE support.
-
-## Browser Support
-
-- Chrome 51+
-- Firefox 54+
-- Safari 10+
-- Edge 15+
-- IE 11 (with appropriate polyfills)
 
 ## Dependencies
 
