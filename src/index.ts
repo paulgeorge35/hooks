@@ -8,5 +8,6 @@ export { useMediaQuery } from './useMediaQuery';
 export { useNumber, type UseNumber, type UseNumberActions, type UseNumberProps } from './useNumber';
 export { usePrevious } from './usePrevious';
 export { useStepper, type UseStepper, type UseStepperActions, type UseStepperOptions } from './useStepper';
+export { useWebSocket, type UseWebSocket, type UseWebSocketProps } from './useWebSocket';
 export { useWindowSize, type WindowSize } from './useWindowSize';
 
