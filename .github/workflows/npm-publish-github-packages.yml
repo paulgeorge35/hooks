@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-and-publish:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -46,20 +47,50 @@ jobs:
           fi
           echo "Version bump determined: $(cat version_type)"
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
       - name: Bump version
         id: bump-version
         run: |
           version_type=$(cat version_type)
+          # Use `npm version` to bump, but avoid creating a git tag
           npm version $version_type --no-git-tag-version
-          git add package.json package-lock.json
-          git commit -m "ci: bump version to $(node -p -e "require('./package.json').version") [skip ci]"
-          echo "::set-output name=version::$(node -p -e "require('./package.json').version")"
-
-      - name: Create tag
-        run: |
+          
+          # Extract the version without the `v` prefix
           version=$(node -p -e "require('./package.json').version")
-          git tag -a "v$version" -m "Release v$version"
-          git push origin "v$version"
+          
+          # Remove the `v` prefix, if it exists
+          version_without_v="${version#v}"
+          
+          # Commit and push changes
+          git add package.json
+          git commit -m "ci: bump version to $version_without_v [skip ci]"
+          
+          # Save the version without `v` as an environment variable
+          echo "VERSION=$version_without_v" >> $GITHUB_ENV
+
+      - name: Push updated files
+        run: |
+          git push origin main
+      
+      - name: Create and push tag
+        run: |
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          body: |
+            ## Changes in this release:
+            ${{ github.event.head_commit.message }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to GitHub Packages
         run: npm publish
