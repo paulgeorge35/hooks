@@ -56,10 +56,21 @@ jobs:
         id: bump-version
         run: |
           version_type=$(cat version_type)
+          # Use `npm version` to bump, but avoid creating a git tag
           npm version $version_type --no-git-tag-version
-          git add package.json package-lock.json
-          git commit -m "ci: bump version to $(node -p -e "require('./package.json').version") [skip ci]"
-          echo "VERSION=$(node -p -e \"require('./package.json').version\")" >> $GITHUB_ENV
+          
+          # Extract the version without the `v` prefix
+          version=$(node -p -e "require('./package.json').version")
+          
+          # Remove the `v` prefix, if it exists
+          version_without_v="${version#v}"
+          
+          # Commit and push changes
+          git add package.json
+          git commit -m "ci: bump version to $version_without_v [skip ci]"
+          
+          # Save the version without `v` as an environment variable
+          echo "VERSION=$version_without_v" >> $GITHUB_ENV
 
       - name: Push updated files
         run: |
