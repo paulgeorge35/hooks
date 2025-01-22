@@ -35,65 +35,6 @@ export type UseCopyToClipboardProps = {
  *   );
  * }
  * ```
- * 
- * @example
- * ```tsx
- * // Usage with custom toast duration and content
- * import { toast } from 'react-toastify';
- * 
- * function CopyableCode({ code }: { code: string }) {
- *   const { copy } = useCopyToClipboard({
- *     callback: () => {
- *       toast.success('Code copied!', {
- *         position: 'bottom-right',
- *         autoClose: 2000,
- *         hideProgressBar: false,
- *       });
- *     }
- *   });
- * 
- *   return (
- *     <pre onClick={() => copy(code)}>
- *       <code>{code}</code>
- *     </pre>
- *   );
- * }
- * ```
- * 
- * @example
- * ```tsx
- * // Usage with different toast types based on conditions
- * import { toast } from 'react-toastify';
- * 
- * function ShareableContent({ content, maxLength = 1000 }) {
- *   const { copy } = useCopyToClipboard({
- *     callback: () => {
- *       if (content.length > maxLength) {
- *         toast.warning('Content truncated due to length', {
- *           description: 'Only first 1000 characters were copied'
- *         });
- *       } else {
- *         toast.success('Content copied successfully', {
- *           icon: '📋'
- *         });
- *       }
- *     }
- *   });
- * 
- *   const handleCopy = () => {
- *     copy(content.slice(0, maxLength));
- *   };
- * 
- *   return (
- *     <div>
- *       <p>{content}</p>
- *       <button onClick={handleCopy}>
- *         Copy {content.length > maxLength ? 'Partial' : 'Full'} Content
- *       </button>
- *     </div>
- *   );
- * }
- * ```
  */
 export const useCopyToClipboard = ({ callback }: UseCopyToClipboardProps): UseCopyToClipboard => {
     const copy = useCallback((value: string) => {

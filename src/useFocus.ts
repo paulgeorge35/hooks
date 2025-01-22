@@ -3,6 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 export type UseFocus = {
     /** Whether the element is currently focused */
     isFocused: boolean;
+    /** Function to set the focus state to true */
+    setFocus: () => void;
+    /** Function to set the focus state to false */
+    setBlur: () => void;
 }
 
 export type UseFocusProps = {
@@ -52,18 +56,33 @@ export const useFocus = ({ ref, onFocus, onBlur }: UseFocusProps): UseFocus => {
         onBlur?.();
     }, [onBlur]);
 
+    const setFocus = useCallback(() => {
+        if (ref.current) {
+            ref.current.focus();
+            handleFocus();
+        }
+    }, [ref, handleFocus]);
+
+    const setBlur = useCallback(() => {
+        if (ref.current) {
+            ref.current.blur();
+            handleBlur();
+        }
+    }, [ref, handleBlur]);
+
     useEffect(() => {
         const element = ref.current;
+        const controller = new AbortController();
+
         if (element) {
-            element.addEventListener('focus', handleFocus);
-            element.addEventListener('blur', handleBlur);
+            element.addEventListener('focus', handleFocus, { signal: controller.signal });
+            element.addEventListener('blur', handleBlur, { signal: controller.signal });
 
             return () => {
-                element.removeEventListener('focus', handleFocus);
-                element.removeEventListener('blur', handleBlur);
+                controller.abort();
             };
         }
     }, [handleFocus, handleBlur, ref]);
 
-    return { isFocused };
+    return { isFocused, setFocus, setBlur };
 }

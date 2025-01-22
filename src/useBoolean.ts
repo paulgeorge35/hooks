@@ -24,7 +24,7 @@ export type UseBooleanActions = {
  * 
  * @example
  * ```tsx
- * const { value, toggle, setTrue, setFalse } = useBoolean(false);
+ * const { value, setValue, toggle, setTrue, setFalse } = useBoolean(false);
  * 
  * return (
  *   <div>
@@ -32,6 +32,8 @@ export type UseBooleanActions = {
  *     <button onClick={toggle}>Toggle</button>
  *     <button onClick={setTrue}>Set True</button>
  *     <button onClick={setFalse}>Set False</button>
+ *     <button onClick={() => setValue(true)}>Set True</button>
+ *     <button onClick={() => setValue(false)}>Set False</button>
  *   </div>
  * );
  * ```

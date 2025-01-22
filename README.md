@@ -40,6 +40,13 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 
 Before installing, you need to configure your package manager to access the GitHub Packages registry.
 
+### GitHub Personal Access Token
+First, create a GitHub Personal Access Token with the `read:packages` permission. Then add the following to your `~/.zshrc` or `~/.bashrc` file:
+
+```bash
+export GITHUB_TOKEN=your_github_token
+```
+
 ### Via bun
 
 1. Create or edit `$HOME/.bunfig.toml` and add:
@@ -65,7 +72,29 @@ bun add @paulgeorge35/hooks@latest
 npm install @paulgeorge35/hooks@latest
 ```
 
-> Note: Make sure to replace `${GITHUB_TOKEN}` with a GitHub Personal Access Token that has the `read:packages` permission.
+### Via yarn
+
+1. Create or edit `~/.yarnrc` and add:
+```
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+2. Install the package:
+```bash
+yarn add @paulgeorge35/hooks@latest
+```
+
+### Via pnpm
+
+1. Create or edit `~/.npmrc` and add:
+```
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+2. Install the package:
+```bash
+pnpm add @paulgeorge35/hooks@latest
+```
 
 ## Usage
 
@@ -79,7 +108,7 @@ function Component() {
   
   return (
     <button onClick={boolean.toggle}>
-      {value ? 'On' : 'Off'}
+      {boolean.value ? 'On' : 'Off'}
     </button>
   );
 }
@@ -109,19 +138,18 @@ function Modal() {
 ### useCopyToClipboard Hook
 
 ```typescript
+import { toast } from 'react-toastify';
 import { useCopyToClipboard } from '@paulgeorge35/hooks';
 
-function ShareComponent() {
-  const { copied, copy } = useCopyToClipboard();
-  const textToCopy = "Hello, World!";
-  
+function ShareButton() {
+  const { copy } = useCopyToClipboard({
+    callback: () => toast.success('Copied to clipboard!')
+  });
+
   return (
-    <div>
-      <button onClick={() => copy(textToCopy)}>
-        {copied ? 'Copied!' : 'Copy Text'}
-      </button>
-      <p>Share this text: {textToCopy}</p>
-    </div>
+    <button onClick={() => copy('Hello, World!')}>
+      Share Link
+    </button>
   );
 }
 ```
@@ -146,7 +174,7 @@ import { useFocus } from '@paulgeorge35/hooks';
 
 function InputComponent() {
   const inputRef = useRef<HTMLDivElement>(null);
-  const { isFocused } = useFocus({
+  const { isFocused, setFocus, setBlur } = useFocus({
     ref: inputRef,
     onFocus: () => console.log('Input focused'),
     onBlur: () => console.log('Input blurred')
@@ -158,6 +186,8 @@ function InputComponent() {
         {isFocused ? 'Focused!' : 'Click to focus'}
       </div>
       <p>Focus status: {isFocused ? 'Focused' : 'Not focused'}</p>
+      <button onClick={setFocus}>Focus</button>
+      <button onClick={setBlur}>Blur</button>
     </div>
   );
 }
