@@ -121,7 +121,6 @@ import { useClickOutside } from '@paulgeorge35/hooks';
 
 function Modal() {
   const handleClickOutside = () => {
-    // Close the modal when clicking outside
     setIsOpen(false);
   };
 
@@ -162,8 +161,6 @@ import { useDebounce } from '@paulgeorge35/hooks';
 function SearchComponent() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
-  
-  // debouncedSearch will update only after 500ms of no changes
 }
 ```
 
@@ -200,8 +197,6 @@ import { useLocalStorage } from '@paulgeorge35/hooks';
 
 function ThemeComponent() {
   const [theme, setTheme] = useLocalStorage('theme', 'light');
-  
-  // Theme persists across page reloads
 }
 ```
 
