@@ -1,5 +1,5 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useFocus } from "../useFocus";
 
@@ -16,6 +16,8 @@ describe("useFocus", () => {
         const ref = { current: document.createElement('div') };
         const { result } = renderHook(() => useFocus({ ref }));
         expect(result.current.isFocused).toBe(false);
+        expect(typeof result.current.setFocus).toBe('function');
+        expect(typeof result.current.setBlur).toBe('function');
     });
 
     test("should handle focus event", async () => {
@@ -23,9 +25,9 @@ describe("useFocus", () => {
         const ref = { current: document.createElement('div') };
         const { result } = renderHook(() => useFocus({ ref, onFocus }));
 
-        // Trigger focus event
-        ref.current.dispatchEvent(new Event('focus'));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await act(async () => {
+            ref.current.dispatchEvent(new Event('focus'));
+        });
 
         expect(result.current.isFocused).toBe(true);
         expect(onFocus).toHaveBeenCalled();
@@ -36,14 +38,41 @@ describe("useFocus", () => {
         const ref = { current: document.createElement('div') };
         const { result } = renderHook(() => useFocus({ ref, onBlur }));
 
-        // First focus
-        ref.current.dispatchEvent(new Event('focus'));
-        await new Promise(resolve => setTimeout(resolve, 0));
-        expect(result.current.isFocused).toBe(true);
+        await act(async () => {
+            // First focus
+            ref.current.dispatchEvent(new Event('focus'));
+            // Then blur
+            ref.current.dispatchEvent(new Event('blur'));
+        });
 
-        // Then blur
-        ref.current.dispatchEvent(new Event('blur'));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(result.current.isFocused).toBe(false);
+        expect(onBlur).toHaveBeenCalled();
+    });
+
+    test("should handle setFocus function", async () => {
+        const onFocus = mock(() => {});
+        const ref = { current: document.createElement('div') };
+        const { result } = renderHook(() => useFocus({ ref, onFocus }));
+
+        await act(async () => {
+            result.current.setFocus();
+        });
+
+        expect(result.current.isFocused).toBe(true);
+        expect(onFocus).toHaveBeenCalled();
+    });
+
+    test("should handle setBlur function", async () => {
+        const onBlur = mock(() => {});
+        const ref = { current: document.createElement('div') };
+        const { result } = renderHook(() => useFocus({ ref, onBlur }));
+
+        await act(async () => {
+            // First focus
+            result.current.setFocus();
+            // Then blur
+            result.current.setBlur();
+        });
 
         expect(result.current.isFocused).toBe(false);
         expect(onBlur).toHaveBeenCalled();
@@ -53,23 +82,26 @@ describe("useFocus", () => {
         const ref = { current: document.createElement('div') };
         const { result } = renderHook(() => useFocus({ ref }));
 
-        // Focus
-        ref.current.dispatchEvent(new Event('focus'));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await act(async () => {
+            // Focus
+            ref.current.dispatchEvent(new Event('focus'));
+        });
         expect(result.current.isFocused).toBe(true);
 
-        // Blur
-        ref.current.dispatchEvent(new Event('blur'));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await act(async () => {
+            // Blur
+            ref.current.dispatchEvent(new Event('blur'));
+        });
         expect(result.current.isFocused).toBe(false);
 
-        // Focus again
-        ref.current.dispatchEvent(new Event('focus'));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await act(async () => {
+            // Focus again
+            ref.current.dispatchEvent(new Event('focus'));
+        });
         expect(result.current.isFocused).toBe(true);
     });
 
-    test("should cleanup event listeners on unmount", async () => {
+    test("should cleanup event listeners on unmount", () => {
         const ref = { current: document.createElement('div') };
         const removeEventListenerSpy = mock(ref.current.removeEventListener);
         ref.current.removeEventListener = removeEventListenerSpy;
@@ -77,7 +109,7 @@ describe("useFocus", () => {
         const { unmount } = renderHook(() => useFocus({ ref }));
         unmount();
 
-        expect(removeEventListenerSpy).toHaveBeenCalledTimes(2); // Once for focus, once for blur
+        expect(removeEventListenerSpy).toHaveBeenCalledTimes(0); // We're using AbortController now
     });
 
     test("should handle null ref", () => {
@@ -90,12 +122,13 @@ describe("useFocus", () => {
         const ref = { current: document.createElement('div') };
         const { result } = renderHook(() => useFocus({ ref }));
 
-        expect(() => {
-            ref.current.dispatchEvent(new Event('focus'));
-        }).not.toThrow();
-
-        expect(() => {
-            ref.current.dispatchEvent(new Event('blur'));
-        }).not.toThrow();
+        await act(async () => {
+            expect(() => {
+                ref.current.dispatchEvent(new Event('focus'));
+                ref.current.dispatchEvent(new Event('blur'));
+                result.current.setFocus();
+                result.current.setBlur();
+            }).not.toThrow();
+        });
     });
 }); 
