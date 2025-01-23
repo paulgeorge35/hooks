@@ -41,18 +41,14 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 Before installing, you need to configure your package manager to access the GitHub Packages registry.
 
 ### GitHub Personal Access Token
-First, create a GitHub Personal Access Token with the `read:packages` permission. Then add the following to your `~/.zshrc` or `~/.bashrc` file:
-
-```bash
-export GITHUB_TOKEN=your_github_token
-```
+First, create a GitHub Personal Access Token with the `read:packages` permission. And add it to your `~/.bunfig.toml` or `~/.npmrc` or `~/.yarnrc` or `~/.pnpmrc` file if you haven't already.
 
 ### Via bun
 
 1. Create or edit `$HOME/.bunfig.toml` and add:
 ```toml
 [install.scopes]
-"@paulgeorge35" = { token = "${GITHUB_TOKEN}", url = "https://npm.pkg.github.com/" }
+"@paulgeorge35" = { token = "your_github_token", url = "https://npm.pkg.github.com/" }
 ```
 
 2. Install the package:
@@ -62,9 +58,9 @@ bun add @paulgeorge35/hooks@latest
 
 ### Via npm
 
-1. Create or edit `~/.npmrc` and add:
+1. Create or edit `$HOME/.npmrc` and add:
 ```
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+//npm.pkg.github.com/:_authToken=your_github_token
 ```
 
 2. Install the package:
@@ -74,9 +70,9 @@ npm install @paulgeorge35/hooks@latest
 
 ### Via yarn
 
-1. Create or edit `~/.yarnrc` and add:
+1. Create or edit `$HOME/.yarnrc` and add:
 ```
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+//npm.pkg.github.com/:_authToken=your_github_token
 ```
 
 2. Install the package:
@@ -86,9 +82,9 @@ yarn add @paulgeorge35/hooks@latest
 
 ### Via pnpm
 
-1. Create or edit `~/.npmrc` and add:
+1. Create or edit `$HOME/.npmrc` and add:
 ```
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+//npm.pkg.github.com/:_authToken=your_github_token
 ```
 
 2. Install the package:
