@@ -3,7 +3,8 @@ name: Build
 on:
   push:
     branches:
-      - '**'  # This matches any branch
+      - '**'
+      - '!main'
 
 jobs:
   build:
@@ -26,3 +27,6 @@ jobs:
 
       - name: Run tests
         run: bun test 
+
+      - name: Build Storybook
+        run: bun run build-storybook

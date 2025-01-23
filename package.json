@@ -15,11 +15,20 @@
     "build:esm": "tsc",
     "build:cjs": "tsc -p tsconfig-require.json",
     "build": "bun run clean && bun run build:esm && bun run build:cjs",
-    "prepare": "bun run build"
+    "prepare": "bun run build",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "type": "module",
   "devDependencies": {
+    "@chromatic-com/storybook": "^3.2.4",
     "@happy-dom/global-registrator": "^16.6.0",
+    "@storybook/addon-essentials": "8.6.0-alpha.1",
+    "@storybook/addon-interactions": "8.6.0-alpha.1",
+    "@storybook/blocks": "8.6.0-alpha.1",
+    "@storybook/react": "8.6.0-alpha.1",
+    "@storybook/react-vite": "8.6.0-alpha.1",
+    "@storybook/test": "8.6.0-alpha.1",
     "@testing-library/react": "^16.2.0",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/react": "^19.0.7",
@@ -28,6 +37,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rimraf": "^6.0.1",
+    "storybook": "8.6.0-alpha.1",
     "typescript": "^5.7.3"
   },
   "publishConfig": {

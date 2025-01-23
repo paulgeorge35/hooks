@@ -25,7 +25,8 @@
   "exclude": [
     "lib",
     "node_modules",
-    "src/__tests__"
+    "src/__tests__",
+    "src/stories"
   ],
   "include": [
     "src"
