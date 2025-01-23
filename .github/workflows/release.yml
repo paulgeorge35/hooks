@@ -44,8 +44,13 @@ jobs:
       - name: Determine version bump
         id: version-bump
         run: |
-          # Get the commit messages for the current push
-          commits=$(git log --format=%B --merges -n 1)
+          # Get all commit messages since the last tag
+          commits=$(git log $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD --format=%B)
+          
+          # Log all commit messages for debugging
+          echo "Commit messages found:"
+          echo "$commits"
+          echo "-------------------"
           
           # Determine version type based on keywords
           if echo "$commits" | grep -iq "BREAKING CHANGE"; then

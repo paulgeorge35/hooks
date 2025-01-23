@@ -21,7 +21,6 @@ export const useClickOutside = ({ callback, exceptionClassNames, exceptionIds }:
     const ref = useRef<HTMLDivElement | HTMLDialogElement>(null);
 
     const handleClickOutside = useCallback((event: MouseEvent) => {
-        console.log('handleClickOutside', event.target);
         const target = event.target as HTMLElement | HTMLDialogElement;
         if (ref.current && !ref.current.contains(target) && !exceptionClassNames?.includes(target.className) && !exceptionIds?.includes(target.id)) {
             callback?.();
