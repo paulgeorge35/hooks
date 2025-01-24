@@ -188,21 +188,19 @@ function SearchComponent() {
 import { useFocus } from '@paulgeorge35/hooks';
 
 function InputComponent() {
-  const inputRef = useRef<HTMLDivElement>(null);
-  const { isFocused, setFocus, setBlur } = useFocus({
-    ref: inputRef,
+  const [ref, isFocused] = useFocus({
     onFocus: () => console.log('Input focused'),
     onBlur: () => console.log('Input blurred')
   });
   
   return (
     <div>
-      <div ref={inputRef} tabIndex={0}>
+      <div ref={ref} tabIndex={0}>
         {isFocused ? 'Focused!' : 'Click to focus'}
       </div>
       <p>Focus status: {isFocused ? 'Focused' : 'Not focused'}</p>
-      <button onClick={setFocus}>Focus</button>
-      <button onClick={setBlur}>Blur</button>
+      <button onClick={() => ref.current?.focus()}>Focus</button>
+      <button onClick={() => ref.current?.blur()}>Blur</button>
     </div>
   );
 }
