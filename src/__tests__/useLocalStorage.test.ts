@@ -1,5 +1,5 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { useLocalStorage } from "../useLocalStorage";
 
@@ -165,5 +165,123 @@ describe("useLocalStorage", () => {
         rerender();
 
         expect(result.current[0]).toBe("updated");
+    });
+
+    test("should handle read errors with proper error object", async () => {
+        // Mock JSON.parse to throw
+        const originalParse = JSON.parse;
+        JSON.parse = () => { throw new Error('Invalid JSON'); };
+
+        // Set an invalid JSON value
+        window.localStorage.setItem("test-key", "invalid json");
+
+        const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
+
+        // Verify error object structure
+        expect(result.current[2]).toEqual({
+            type: 'read',
+            message: 'Error reading localStorage key "test-key"',
+            originalError: expect.any(Error)
+        });
+
+        // Value should fall back to initial value
+        expect(result.current[0]).toBe("initial");
+
+        // Restore original JSON.parse
+        JSON.parse = originalParse;
+    });
+
+    test("should handle write errors with proper error object", async () => {
+        // Mock JSON.stringify to throw
+        const originalStringify = JSON.stringify;
+        JSON.stringify = () => { throw new Error('Circular reference'); };
+
+        const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
+
+        // Attempt to update value
+        act(() => {
+            result.current[1]("updated");
+        });
+
+        // Wait for error state to be set
+        await waitFor(() => {
+            expect(result.current[2]).toEqual({
+                type: 'write',
+                message: 'Error setting localStorage key "test-key"',
+                originalError: expect.any(Error)
+            });
+        });
+
+        // Restore original stringify
+        JSON.stringify = originalStringify;
+    });
+
+    test("should clear error on successful write after error", async () => {
+        // First cause a write error
+        const originalStringify = JSON.stringify;
+        JSON.stringify = () => { throw new Error('Circular reference'); };
+
+        const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
+
+        act(() => {
+            result.current[1]("will fail");
+        });
+
+        // Wait for error state to be set
+        await waitFor(() => {
+            expect(result.current[2]).toEqual({
+                type: 'write',
+                message: 'Error setting localStorage key "test-key"',
+                originalError: expect.any(Error)
+            });
+        });
+
+        // Restore original stringify and try writing again
+        JSON.stringify = originalStringify;
+
+        act(() => {
+            result.current[1]("will succeed");
+        });
+
+        // Wait for error to be cleared
+        await waitFor(() => {
+            expect(result.current[2]).toBeNull();
+        });
+    });
+
+    test("should handle storage events from other tabs", async () => {
+        const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
+
+        // Simulate storage event from another tab
+        act(() => {
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'test-key',
+                newValue: JSON.stringify("updated from another tab")
+            }));
+        });
+
+        expect(result.current[0]).toBe("updated from another tab");
+    });
+
+    test("should handle invalid JSON in storage events", async () => {
+        const { result } = renderHook(() => useLocalStorage("test-key", "initial"));
+
+        // Simulate storage event with invalid JSON
+        act(() => {
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'test-key',
+                newValue: 'invalid json'
+            }));
+        });
+
+        // Value should remain unchanged
+        expect(result.current[0]).toBe("initial");
+
+        // Should set error
+        expect(result.current[2]).toEqual({
+            type: 'read',
+            message: 'Error parsing storage event for key "test-key"',
+            originalError: expect.any(Error)
+        });
     });
 }); 
