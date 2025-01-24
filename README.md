@@ -212,7 +212,7 @@ function InputComponent() {
 import { useLocalStorage } from '@paulgeorge35/hooks';
 
 function ThemeComponent() {
-  const [theme, setTheme] = useLocalStorage('theme', 'light');
+  const [theme, setTheme, error] = useLocalStorage('theme', 'light');
 }
 ```
 
