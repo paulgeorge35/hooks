@@ -12,100 +12,137 @@ afterEach(() => {
 });
 
 describe("useClickOutside", () => {
-    test("should initialize with ref", async () => {
-        const { result } = renderHook(() => useClickOutside({}));
+    test("should initialize with refs", async () => {
+        const callback = mock(() => {});
+        const { result } = renderHook(() => useClickOutside(callback));
         expect(result.current).toBeDefined();
-        expect(result.current.current).toBeNull();
+        expect(result.current.ref.current).toBeNull();
+        expect(result.current.triggerRef.current).toBeNull();
     });
 
     test("should call callback when clicking outside", async () => {
         const callback = mock(() => {});
-        const { result } = renderHook(() => useClickOutside({ callback }));
-        
-        // Create both inside and outside elements to properly test the click
-        const insideElement = document.createElement('div');
-        const outsideElement = document.createElement('div');
-        document.body.appendChild(insideElement);
-        document.body.appendChild(outsideElement);
-        
-        result.current.current = insideElement;
-        
+        const { result } = renderHook(() => useClickOutside(callback));
+
+        // Create and append test elements
+        const container = document.createElement('div');
+        const element = document.createElement('div');
+        const trigger = document.createElement('button');
+        container.appendChild(element);
+        container.appendChild(trigger);
+        document.body.appendChild(container);
+
+        // Set refs
+        Object.defineProperty(result.current.ref, 'current', { value: element });
+        Object.defineProperty(result.current.triggerRef, 'current', { value: trigger });
+
         // Wait for effect to be set up
         await new Promise(resolve => setTimeout(resolve, 0));
-        
+
         // Simulate click outside
         const clickEvent = new MouseEvent('click', {
             bubbles: true,
             cancelable: true,
-            view: window
         });
-        document.dispatchEvent(clickEvent);
-        
+        container.dispatchEvent(clickEvent);
+
         // Wait for event handling
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 0));
         expect(callback).toHaveBeenCalled();
-        
+
         // Cleanup
-        document.body.removeChild(insideElement);
-        document.body.removeChild(outsideElement);
+        document.body.removeChild(container);
     });
 
     test("should not call callback when clicking inside", async () => {
         const callback = mock(() => {});
-        const { result } = renderHook(() => useClickOutside({ callback }));
-        
-        // Create a div element and set it as the ref's current
-        const insideElement = document.createElement('div');
-        document.body.appendChild(insideElement);
-        result.current.current = insideElement;
-        
+        const { result } = renderHook(() => useClickOutside(callback));
+
+        // Create and append test elements
+        const container = document.createElement('div');
+        const element = document.createElement('div');
+        const trigger = document.createElement('button');
+        container.appendChild(element);
+        container.appendChild(trigger);
+        document.body.appendChild(container);
+
+        // Set refs
+        Object.defineProperty(result.current.ref, 'current', { value: element });
+        Object.defineProperty(result.current.triggerRef, 'current', { value: trigger });
+
         // Wait for effect to be set up
         await new Promise(resolve => setTimeout(resolve, 0));
-        
+
         // Simulate click inside
         const clickEvent = new MouseEvent('click', {
             bubbles: true,
             cancelable: true,
-            view: window
         });
-        insideElement.dispatchEvent(clickEvent);
-        
+        element.dispatchEvent(clickEvent);
+
         // Wait for event handling
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 0));
         expect(callback).not.toHaveBeenCalled();
-        
-        document.body.removeChild(insideElement);
+
+        // Cleanup
+        document.body.removeChild(container);
     });
 
-    test("should work without callback", async () => {
-        const { result } = renderHook(() => useClickOutside({}));
-        
-        // Create a div element that's not the ref
-        const outsideElement = document.createElement('div');
-        document.body.appendChild(outsideElement);
-        
-        // Simulate click outside
+    test("should not call callback when clicking trigger", async () => {
+        const callback = mock(() => {});
+        const { result } = renderHook(() => useClickOutside(callback));
+
+        // Create and append test elements
+        const container = document.createElement('div');
+        const element = document.createElement('div');
+        const trigger = document.createElement('button');
+        container.appendChild(element);
+        container.appendChild(trigger);
+        document.body.appendChild(container);
+
+        // Set refs
+        Object.defineProperty(result.current.ref, 'current', { value: element });
+        Object.defineProperty(result.current.triggerRef, 'current', { value: trigger });
+
+        // Wait for effect to be set up
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        // Simulate click on trigger
         const clickEvent = new MouseEvent('click', {
             bubbles: true,
             cancelable: true,
-            view: window
         });
-        
-        expect(() => {
-            document.dispatchEvent(clickEvent);
-        }).not.toThrow();
-        
-        document.body.removeChild(outsideElement);
+        trigger.dispatchEvent(clickEvent);
+
+        // Wait for event handling
+        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(callback).not.toHaveBeenCalled();
+
+        // Cleanup
+        document.body.removeChild(container);
     });
 
-    test("should cleanup event listener on unmount", async () => {
-        const removeEventListenerSpy = mock(document.removeEventListener);
-        document.removeEventListener = removeEventListenerSpy;
-        
-        const { unmount } = renderHook(() => useClickOutside({}));
+    test("should cleanup event listeners on unmount", async () => {
+        const abortSpy = mock(() => {});
+        const originalAbortController = globalThis.AbortController;
+        class MockAbortController implements AbortController {
+            readonly signal: AbortSignal = new EventTarget() as AbortSignal;
+            abort = abortSpy;
+        }
+        globalThis.AbortController = MockAbortController;
+
+        const callback = mock(() => {});
+        const { unmount } = renderHook(() => useClickOutside(callback));
+
+        // Wait for effect to be set up
+        await new Promise(resolve => setTimeout(resolve, 0));
+
         unmount();
-        
-        expect(removeEventListenerSpy).toHaveBeenCalled();
-        expect(removeEventListenerSpy.mock.calls[0][0]).toBe('click');
+
+        // Wait for cleanup
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(abortSpy).toHaveBeenCalled();
+        globalThis.AbortController = originalAbortController;
     });
 }); 

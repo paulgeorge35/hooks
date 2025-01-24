@@ -120,11 +120,16 @@ function Modal() {
     setIsOpen(false);
   };
 
-  const modalRef = useClickOutside({ callback: handleClickOutside });
+  const { ref, triggerRef } = useClickOutside(handleClickOutside);
   
   return (
-    <div ref={modalRef} className="modal">
-      Modal content that can be closed by clicking outside
+    <div>
+      <button ref={triggerRef} type="button">
+        Open Modal
+      </button>
+      <div ref={ref} className="modal">
+        Modal content that can be closed by clicking outside
+      </div>
     </div>
   );
 }
