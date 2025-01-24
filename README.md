@@ -162,7 +162,23 @@ import { useDebounce } from '@paulgeorge35/hooks';
 
 function SearchComponent() {
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 500);
+  const { value, status, flush, cancel } = useDebounce<string>(search, { 
+    delay: 500, 
+    updateOnUnmount: true, 
+    onUpdate: (value) => console.log('Updated value:', value) 
+  });
+
+  return (
+    <div>
+      <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <button onClick={flush}>Flush</button>
+      <button onClick={cancel}>Cancel</button>
+
+      <p>Current value: {search}</p>
+      <p>Debounced value: {value}</p>
+      <p>Status: {status}</p>
+    </div>
+  );
 }
 ```
 
