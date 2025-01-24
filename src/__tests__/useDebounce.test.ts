@@ -15,7 +15,7 @@ describe("useDebounce", () => {
     test("should initialize with initial value", async () => {
         const { result } = renderHook(() => useDebounce("initial", { delay: 500 }));
         expect(result.current.value).toBe("initial");
-        expect(result.current.isPending).toBe(true);
+        expect(result.current.status).toBe("idle");
     });
 
     test("should not update value before delay", async () => {
@@ -25,7 +25,7 @@ describe("useDebounce", () => {
         );
 
         expect(result.current.value).toBe("initial");
-        expect(result.current.isPending).toBe(true);
+        expect(result.current.status).toBe("idle");
 
         // Change the value
         rerender({ value: "updated" });
@@ -33,7 +33,7 @@ describe("useDebounce", () => {
         // Check before delay
         await new Promise(resolve => setTimeout(resolve, 100));
         expect(result.current.value).toBe("initial");
-        expect(result.current.isPending).toBe(true);
+        expect(result.current.status).toBe("pending");
     });
 
     test("should update value after delay", async () => {
@@ -48,7 +48,7 @@ describe("useDebounce", () => {
         // Wait for the full delay
         await new Promise(resolve => setTimeout(resolve, 600));
         expect(result.current.value).toBe("updated");
-        expect(result.current.isPending).toBe(false);
+        expect(result.current.status).toBe("idle");
     });
 
     test("should use default delay of 500ms", async () => {
@@ -63,12 +63,12 @@ describe("useDebounce", () => {
         // Check before default delay
         await new Promise(resolve => setTimeout(resolve, 100));
         expect(result.current.value).toBe("initial");
-        expect(result.current.isPending).toBe(true);
+        expect(result.current.status).toBe("pending");
 
         // Wait for the default delay
         await new Promise(resolve => setTimeout(resolve, 500));
         expect(result.current.value).toBe("updated");
-        expect(result.current.isPending).toBe(false);
+        expect(result.current.status).toBe("idle");
     });
 
     test("should handle multiple rapid updates", async () => {
@@ -88,12 +88,12 @@ describe("useDebounce", () => {
 
         // Check that intermediate values were not set
         expect(result.current.value).toBe("initial");
-        expect(result.current.isPending).toBe(true);
+        expect(result.current.status).toBe("pending");
 
         // Wait for the delay
         await new Promise(resolve => setTimeout(resolve, 600));
         expect(result.current.value).toBe("update3");
-        expect(result.current.isPending).toBe(false);
+        expect(result.current.status).toBe("idle");
     });
 
     test("should handle different value types", async () => {
@@ -105,7 +105,7 @@ describe("useDebounce", () => {
         numberRerender({ value: 42 });
         await new Promise(resolve => setTimeout(resolve, 600));
         expect(numberResult.current.value).toBe(42);
-        expect(numberResult.current.isPending).toBe(false);
+        expect(numberResult.current.status).toBe("idle");
 
         const { result: boolResult, rerender: boolRerender } = renderHook(
             ({ value }) => useDebounce(value, { delay: 500 }),
@@ -115,7 +115,7 @@ describe("useDebounce", () => {
         boolRerender({ value: true });
         await new Promise(resolve => setTimeout(resolve, 600));
         expect(boolResult.current.value).toBe(true);
-        expect(boolResult.current.isPending).toBe(false);
+        expect(boolResult.current.status).toBe("idle");
     });
 
     test("should cleanup timeout on unmount", async () => {
@@ -141,31 +141,55 @@ describe("useDebounce", () => {
         rerender({ value: "updated" });
         await new Promise(resolve => setTimeout(resolve, 50));
         expect(result.current.value).toBe("updated");
-        expect(result.current.isPending).toBe(false);
+        expect(result.current.status).toBe("idle");
     });
 
-    test("should handle flush and cancel", async () => {
+    test("should handle flush", async () => {
         const { result, rerender } = renderHook(
             ({ value }) => useDebounce(value, { delay: 500 }),
             { initialProps: { value: "initial" } }
         );
 
-        // Test flush
         rerender({ value: "updated" });
         expect(result.current.value).toBe("initial");
+        expect(result.current.status).toBe("pending");
 
         act(() => {
             result.current.flush();
         });
         expect(result.current.value).toBe("updated");
-        expect(result.current.isPending).toBe(false);
+        expect(result.current.status).toBe("idle");
+    });
 
-        // Test cancel
-        rerender({ value: "another update" });
+    test("should handle cancel and resume", async () => {
+        const { result, rerender } = renderHook(
+            ({ value }) => useDebounce(value, { delay: 500 }),
+            { initialProps: { value: "initial" } }
+        );
+
+        // Start a debounce
+        rerender({ value: "update1" });
+        expect(result.current.status).toBe("pending");
+
+        // Cancel it
         act(() => {
             result.current.cancel();
         });
-        expect(result.current.value).toBe("updated");
-        expect(result.current.isPending).toBe(false);
+        expect(result.current.value).toBe("initial");
+        expect(result.current.status).toBe("cancelled");
+
+        // Same value update should maintain cancelled state
+        rerender({ value: "update1" });
+        expect(result.current.status).toBe("cancelled");
+        expect(result.current.value).toBe("initial");
+
+        // New value should resume debouncing
+        rerender({ value: "update2" });
+        expect(result.current.status).toBe("pending");
+
+        // Wait for debounce to complete
+        await new Promise(resolve => setTimeout(resolve, 600));
+        expect(result.current.value).toBe("update2");
+        expect(result.current.status).toBe("idle");
     });
 }); 
