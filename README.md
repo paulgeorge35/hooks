@@ -234,20 +234,34 @@ function ResponsiveComponent() {
 import { useNumber } from '@paulgeorge35/hooks';
 
 function Counter() {
-  const counter = useNumber(0, {
-    min: -10,
-    max: 10,
-    step: 2,
-    loop: false
+  const volume = useNumber(50, {
+    min: 0,
+    max: 100,
+    step: 5,
+    loop: true,
+    float: true,
+    precision: 1,
+    enableKeyboardControls: true,
+    onChange: (value) => updateVolume(value),
+    onLimit: (at) => showNotification(`Volume at ${at}`)
   });
   
   return (
     <div>
-      <p>Count: {counter.value}</p>
-      <button onClick={() => counter.increase()}>+2</button>
-      <button onClick={() => counter.increase(5)}>+5</button>
-      <button onClick={() => counter.decrease()}>-2</button>
-      <button onClick={counter.reset}>Reset</button>
+      <label>
+        Volume: {volume.value}%
+        <input
+          type="range"
+          value={volume.value}
+          onChange={(e) => volume.setValue(parseFloat(e.target.value))}
+          min={0}
+          max={100}
+          step={5}
+        />
+      </label>
+      <div>
+        Delta: {volume.delta > 0 ? '+' : ''}{volume.delta}%
+      </div>
     </div>
   );
 }

@@ -1,20 +1,32 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type UseNumberActions = {
     /** Function to set the number value directly */
-    setValue: React.Dispatch<React.SetStateAction<number>>;
+    setValue: (value: number | ((prev: number) => number)) => void;
     /** Function to increase the number by a specified amount or the default step */
     increase: (amount?: number) => void;
     /** Function to decrease the number by a specified amount or the default step */
     decrease: (amount?: number) => void;
     /** Function to reset the number to its initial value */
     reset: () => void;
-}
+    /** Function to validate and clamp a value to the allowed range */
+    clamp: (value: number) => number;
+};
 
-export type UseNumber = UseNumberActions & {
+export type UseNumberState = {
     /** The current number value */
     value: number;
-}
+    /** Whether the value is at its minimum */
+    isAtMin: boolean;
+    /** Whether the value is at its maximum */
+    isAtMax: boolean;
+    /** The amount the value has changed since initialization */
+    delta: number;
+    /** Whether the value is currently being changed */
+    isChanging: boolean;
+};
+
+export type UseNumber = UseNumberActions & UseNumberState;
 
 export type UseNumberProps = {
     /** Minimum allowed value */
@@ -25,106 +37,213 @@ export type UseNumberProps = {
     step?: number;
     /** Whether to loop around when reaching min/max values */
     loop?: boolean;
-}
+    /** Whether to allow floating point numbers */
+    float?: boolean;
+    /** Number of decimal places to round to */
+    precision?: number;
+    /** Callback when the value changes */
+    onChange?: (value: number, previous: number) => void;
+    /** Callback when value reaches min/max */
+    onLimit?: (at: 'min' | 'max') => void;
+    /** Whether to enable keyboard arrow controls when focused */
+    enableKeyboardControls?: boolean;
+};
 
 /**
- * A hook that manages a numeric value with increment, decrement, and constraint capabilities.
- * Provides utilities for managing numeric state with boundaries and step values.
+ * A hook that manages a numeric value with comprehensive features for
+ * increment, decrement, validation, and formatting.
  * 
  * @param initialValue - The initial number value
  * @param props - Configuration options
- * @param props.min - Minimum allowed value
- * @param props.max - Maximum allowed value
- * @param props.step - Step value for increase/decrease operations (defaults to 1)
- * @param props.loop - Whether to loop around when reaching min/max values (defaults to false)
- * @returns An object containing the number value and functions to manipulate it
+ * @returns An object containing the number value and control functions
  * 
  * @example
  * ```tsx
- * // Basic counter
- * const counter = useNumber(0, { min: 0, max: 10 });
+ * // Basic counter with validation
+ * const counter = useNumber(0, { 
+ *   min: 0, 
+ *   max: 10,
+ *   onChange: (value, prev) => console.log(`Changed from ${prev} to ${value}`)
+ * });
  * 
  * return (
  *   <div>
  *     <p>Count: {counter.value}</p>
- *     <button onClick={() => counter.increase()}>+1</button>
- *     <button onClick={() => counter.decrease()}>-1</button>
- *     <button onClick={counter.reset}>Reset</button>
+ *     <button 
+ *       onClick={() => counter.increase()}
+ *       disabled={counter.isAtMax}
+ *     >
+ *       Increase
+ *     </button>
+ *     <button 
+ *       onClick={() => counter.decrease()}
+ *       disabled={counter.isAtMin}
+ *     >
+ *       Decrease
+ *     </button>
  *   </div>
  * );
  * ```
  * 
  * @example
  * ```tsx
- * // Custom step and loop behavior
+ * // Advanced usage with all features
  * const volume = useNumber(50, {
  *   min: 0,
  *   max: 100,
  *   step: 5,
- *   loop: true
+ *   loop: true,
+ *   float: true,
+ *   precision: 1,
+ *   enableKeyboardControls: true,
+ *   onChange: (value) => updateVolume(value),
+ *   onLimit: (at) => showNotification(`Volume at ${at}`)
  * });
  * 
  * return (
  *   <div>
- *     <p>Volume: {volume.value}%</p>
- *     <button onClick={() => volume.increase(10)}>+10%</button>
- *     <button onClick={() => volume.decrease(10)}>-10%</button>
+ *     <label>
+ *       Volume: {volume.value}%
+ *       <input
+ *         type="range"
+ *         value={volume.value}
+ *         onChange={(e) => volume.setValue(parseFloat(e.target.value))}
+ *         min={0}
+ *         max={100}
+ *         step={5}
+ *       />
+ *     </label>
+ *     <div>
+ *       Delta: {volume.delta > 0 ? '+' : ''}{volume.delta}%
+ *     </div>
  *   </div>
- * );
- * ```
- * 
- * @example
- * ```tsx
- * // Form input with numeric constraints
- * const price = useNumber(0, {
- *   min: 0,
- *   max: 1000,
- *   step: 0.01
- * });
- * 
- * return (
- *   <input
- *     type="number"
- *     value={price.value}
- *     onChange={(e) => price.setValue(parseFloat(e.target.value))}
- *     min={0}
- *     max={1000}
- *     step={0.01}
- *   />
  * );
  * ```
  */
 export const useNumber = (
     initialValue: number,
-    { min, max, step = 1, loop = false }: UseNumberProps = {}
+    {
+        min,
+        max,
+        step = 1,
+        loop = false,
+        float = false,
+        precision = 2,
+        onChange,
+        onLimit,
+        enableKeyboardControls = false,
+    }: UseNumberProps = {}
 ): UseNumber => {
-    const [value, setValue] = useState<number>(() => {
-        if (min !== undefined && initialValue < min) return min;
-        if (max !== undefined && initialValue > max) return max;
-        return initialValue;
-    });
+    // Validate and normalize initial value
+    const normalizedInitial = useMemo(() => {
+        let value = initialValue;
+        if (!float) value = Math.round(value);
+        if (min !== undefined && value < min) value = min;
+        if (max !== undefined && value > max) value = max;
+        if (precision !== undefined && float) {
+            value = Number(value.toFixed(precision));
+        }
+        return value;
+    }, [initialValue, min, max, float, precision]);
+
+    const [value, setInternalValue] = useState<number>(normalizedInitial);
+    const [isChanging, setIsChanging] = useState(false);
+    const previousValueRef = useRef(normalizedInitial);
+    const changeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Clamp value to min/max range
+    const clamp = useCallback((newValue: number): number => {
+        let clampedValue = newValue;
+
+        if (!float) {
+            clampedValue = Math.round(clampedValue);
+        } else if (precision !== undefined) {
+            clampedValue = Number(clampedValue.toFixed(precision));
+        }
+
+        if (min !== undefined && max !== undefined && loop) {
+            if (clampedValue > max) return min;
+            if (clampedValue < min) return max;
+        }
+
+        if (min !== undefined) {
+            if (clampedValue < min) {
+                onLimit?.('min');
+                return min;
+            }
+        }
+
+        if (max !== undefined) {
+            if (clampedValue > max) {
+                onLimit?.('max');
+                return max;
+            }
+        }
+
+        return clampedValue;
+    }, [min, max, loop, float, precision, onLimit]);
+
+    // Set value with validation
+    const setValue = useCallback((newValue: number | ((prev: number) => number)) => {
+        setInternalValue(prev => {
+            const nextValue = clamp(typeof newValue === 'function' ? newValue(prev) : newValue);
+            if (nextValue !== prev) {
+                onChange?.(nextValue, prev);
+            }
+            previousValueRef.current = nextValue;
+            return nextValue;
+        });
+
+        setIsChanging(true);
+        if (changeTimeoutRef.current) {
+            clearTimeout(changeTimeoutRef.current);
+        }
+        changeTimeoutRef.current = setTimeout(() => {
+            setIsChanging(false);
+        }, 150);
+    }, [clamp, onChange]);
 
     const increase = useCallback((amount?: number) => {
-        setValue(currentValue => {
-            const newValue = currentValue + (amount ?? step);
-            if (max === undefined) return newValue;
-            if (!loop) return Math.min(newValue, max);
-            return newValue > max ? min ?? newValue : newValue;
-        });
-    }, [max, min, step, loop]);
+        setValue(prev => prev + (amount ?? step));
+    }, [setValue, step]);
 
     const decrease = useCallback((amount?: number) => {
-        setValue(currentValue => {
-            const newValue = currentValue - (amount ?? step);
-            if (min === undefined) return newValue;
-            if (!loop) return Math.max(newValue, min);
-            return newValue < min ? max ?? newValue : newValue;
-        });
-    }, [max, min, step, loop]);
+        setValue(prev => prev - (amount ?? step));
+    }, [setValue, step]);
 
     const reset = useCallback(() => {
-        setValue(initialValue);
-    }, [initialValue]);
+        setValue(normalizedInitial);
+    }, [normalizedInitial, setValue]);
+
+    // Keyboard controls
+    useEffect(() => {
+        if (!enableKeyboardControls) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (document.activeElement?.tagName === 'INPUT') return;
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                increase();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                decrease();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [enableKeyboardControls, increase, decrease]);
+
+    // Cleanup
+    useEffect(() => {
+        const timeout = changeTimeoutRef.current;
+        return () => {
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+        };
+    }, []);
 
     return {
         value,
@@ -132,5 +251,10 @@ export const useNumber = (
         increase,
         decrease,
         reset,
+        clamp,
+        isAtMin: min !== undefined && value <= min,
+        isAtMax: max !== undefined && value >= max,
+        delta: value - normalizedInitial,
+        isChanging,
     };
 }; 
