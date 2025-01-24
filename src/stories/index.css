@@ -29,3 +29,74 @@
         gap: 1rem;
     }
 }
+
+.storybook-content-use-click-outside {
+    position: relative;
+    padding: 1rem;
+    min-height: 400px;
+}
+
+.storybook-click-outside-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.storybook-click-outside-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.storybook-click-outside-button-open {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.storybook-click-outside-button-open:hover {
+    background-color: #2563eb;
+}
+
+.storybook-click-outside-button-close {
+    background-color: #ef4444;
+    color: white;
+}
+
+.storybook-click-outside-button-close:hover {
+    background-color: #dc2626;
+}
+
+.storybook-click-outside-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    min-width: 300px;
+}
+
+.storybook-click-outside-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.storybook-click-outside-modal-content {
+    margin-bottom: 1rem;
+    color: #4b5563;
+}
+
+.storybook-click-outside-exception {
+    background-color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 4px;
+}
