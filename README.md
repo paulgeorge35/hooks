@@ -143,7 +143,8 @@ import { useCopyToClipboard } from '@paulgeorge35/hooks';
 
 function ShareButton() {
   const { copy } = useCopyToClipboard({
-    callback: () => toast.success('Copied to clipboard!')
+    onSuccess: () => toast.success('Copied to clipboard!'),
+    onError: (e) => toast.error(e.message)
   });
 
   return (
