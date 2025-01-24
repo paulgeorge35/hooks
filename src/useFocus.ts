@@ -1,88 +1,76 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useBoolean } from "./useBoolean";
 
-export type UseFocus = {
-    /** Whether the element is currently focused */
-    isFocused: boolean;
-    /** Function to set the focus state to true */
-    setFocus: () => void;
-    /** Function to set the focus state to false */
-    setBlur: () => void;
-}
+export type FocusableElement =
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+    | HTMLButtonElement
+    | HTMLAnchorElement;
+
+export type UseFocus<T> = [React.RefObject<T | null>, boolean];
 
 export type UseFocusProps = {
-    /** Reference to the DOM element to track focus state */
-    ref: React.RefObject<HTMLDivElement | null>;
     /** Optional callback to be called when the element receives focus */
-    onFocus?: () => void;
+    onFocus?: (event: FocusEvent) => void;
     /** Optional callback to be called when the element loses focus */
-    onBlur?: () => void;
-}
+    onBlur?: (event: FocusEvent) => void;
+};
 
 /**
- * A hook that tracks the focus state of a DOM element
+ * A hook that tracks and manages the focus state of a focusable DOM element with improved
+ * type safety and additional features. Only works with standard focusable elements like
+ * inputs, textareas, buttons, etc.
  * 
+ * @template T - The type of focusable element
  * @param props - The hook's configuration object
- * @param props.ref - Reference to the DOM element to track focus state
- * @param props.onFocus - Optional callback to be called when the element receives focus
- * @param props.onBlur - Optional callback to be called when the element loses focus
- * @returns An object containing the current focus state
+ * @returns A tuple containing the focus state and control functions
  * 
  * @example
  * ```tsx
- * const elementRef = useRef<HTMLDivElement>(null);
- * const { isFocused } = useFocus({ 
- *   ref: elementRef,
- *   onFocus: () => console.log('Element focused'),
- *   onBlur: () => console.log('Element blurred')
+ * // Basic usage with an input
+ * const [ref, isFocused] = useFocus<HTMLInputElement>({ 
+ *   onFocus: () => console.log('Input focused'),
+ *   onBlur: () => console.log('Input blurred')
  * });
  * 
  * return (
- *   <div ref={elementRef} tabIndex={0}>
- *     {isFocused ? 'Focused!' : 'Not focused'}
- *   </div>
+ *   <input 
+ *     ref={ref}
+ *     type="text"
+ *     className={isFocused ? 'focused' : ''}
+ *   />
  * );
  * ```
  */
-export const useFocus = ({ ref, onFocus, onBlur }: UseFocusProps): UseFocus => {
-    const [isFocused, setIsFocused] = useState(false);
+export const useFocus = <T extends FocusableElement = HTMLInputElement>({
+    onFocus,
+    onBlur,
+}: UseFocusProps = {}): UseFocus<T> => {
+    const ref = useRef<T | null>(null);
+    const isFocused = useBoolean(false);
 
-    const handleFocus = useCallback(() => {
-        setIsFocused(true);
-        onFocus?.();
-    }, [onFocus]);
+    const handleFocus = useCallback((e: Event) => {
+        isFocused.setTrue();
+        onFocus?.(e as FocusEvent);
+    }, [onFocus, isFocused]);
 
-    const handleBlur = useCallback(() => {
-        setIsFocused(false);
-        onBlur?.();
-    }, [onBlur]);
-
-    const setFocus = useCallback(() => {
-        if (ref.current) {
-            ref.current.focus();
-            handleFocus();
-        }
-    }, [ref, handleFocus]);
-
-    const setBlur = useCallback(() => {
-        if (ref.current) {
-            ref.current.blur();
-            handleBlur();
-        }
-    }, [ref, handleBlur]);
+    const handleBlur = useCallback((e: Event) => {
+        isFocused.setFalse();
+        onBlur?.(e as FocusEvent);
+    }, [onBlur, isFocused]);
 
     useEffect(() => {
         const element = ref.current;
-        const controller = new AbortController();
+        const abortController = new AbortController();
 
-        if (element) {
-            element.addEventListener('focus', handleFocus, { signal: controller.signal });
-            element.addEventListener('blur', handleBlur, { signal: controller.signal });
+        element?.addEventListener('focus', handleFocus, { signal: abortController.signal });
+        element?.addEventListener('blur', handleBlur, { signal: abortController.signal });
 
-            return () => {
-                controller.abort();
-            };
-        }
-    }, [handleFocus, handleBlur, ref]);
+        return () => {
+            abortController.abort();
+        };
+    }, [handleFocus, handleBlur]);
 
-    return { isFocused, setFocus, setBlur };
-}
+    return [ref, isFocused.value]
+};
