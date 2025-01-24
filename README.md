@@ -222,7 +222,7 @@ function ThemeComponent() {
 import { useMediaQuery } from '@paulgeorge35/hooks';
 
 function ResponsiveComponent() {
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const {matches: isMobile} = useMediaQuery('(max-width: 768px)');
   
   return isMobile ? <MobileView /> : <DesktopView />;
 }

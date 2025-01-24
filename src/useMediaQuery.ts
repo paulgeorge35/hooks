@@ -1,16 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+export type MediaQueryResult = {
+  /** Whether the media query matches */
+  matches: boolean;
+  /** The media query string being watched */
+  query: string;
+  /** The MediaQueryList object for advanced usage */
+  mediaQueryList: MediaQueryList | null;
+};
+
+export type UseMediaQueryOptions = {
+  /** Whether to initialize the hook immediately */
+  immediate?: boolean;
+  /** Whether to disable the media query listener */
+  disabled?: boolean;
+  /** Callback when the media query match state changes */
+  onChange?: (matches: boolean) => void;
+};
 
 /**
  * A hook that tracks whether a CSS media query matches the current window state.
- * Useful for implementing responsive behavior in components.
+ * Includes performance optimizations and enhanced features.
  * 
  * @param query - The media query string to match against (e.g., '(max-width: 768px)')
- * @returns A boolean indicating whether the media query matches
+ * @param options - Configuration options
+ * @returns An object containing the match state and related information
  * 
  * @example
  * ```tsx
  * // Basic responsive layout
- * const isMobile = useMediaQuery('(max-width: 768px)');
+ * const { matches: isMobile } = useMediaQuery('(max-width: 768px)');
  * 
  * return (
  *   <div className={isMobile ? 'mobile-layout' : 'desktop-layout'}>
@@ -21,41 +40,83 @@ import { useEffect, useState } from 'react';
  * 
  * @example
  * ```tsx
- * // Multiple breakpoints
- * const isSmall = useMediaQuery('(max-width: 640px)');
- * const isMedium = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
- * const isLarge = useMediaQuery('(min-width: 1025px)');
- * 
- * // Complex responsive behavior
- * const isPortrait = useMediaQuery('(orientation: portrait)');
- * const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
- * 
- * return (
- *   <div>
- *     {isSmall && <SmallScreenContent />}
- *     {isMedium && <MediumScreenContent />}
- *     {isLarge && <LargeScreenContent />}
- *     {isPortrait && <PortraitWarning />}
- *     {prefersReducedMotion && <StaticVersion />}
- *   </div>
+ * // Advanced usage with all features
+ * const { matches, mediaQueryList } = useMediaQuery(
+ *   '(prefers-color-scheme: dark)',
+ *   {
+ *     immediate: true,
+ *     onChange: (isDark) => {
+ *       console.log('Dark mode:', isDark);
+ *       updateTheme(isDark ? 'dark' : 'light');
+ *     }
+ *   }
  * );
+ * 
+ * // Access mediaQueryList for advanced features
+ * useEffect(() => {
+ *   if (mediaQueryList?.media.includes('prefers-color-scheme')) {
+ *     // Handle system theme preference
+ *   }
+ * }, [mediaQueryList]);
  * ```
  */
-export function useMediaQuery(query: string): boolean {
+export function useMediaQuery(
+  query: string,
+  {
+    immediate = true,
+    disabled = false,
+    onChange,
+  }: UseMediaQueryOptions = {}
+): MediaQueryResult {
+  // Memoize the query to prevent unnecessary re-renders
+  const mediaQuery = useMemo(() => query.trim(), [query]);
+
+  // State for match status and MediaQueryList
   const [matches, setMatches] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia(query).matches;
+    if (!immediate || typeof window === 'undefined' || disabled) return false;
+    try {
+      return window.matchMedia(mediaQuery).matches;
+    } catch (error) {
+      console.warn(`Invalid media query: ${mediaQuery}`, error);
+      return false;
+    }
   });
 
+  const [mediaQueryList, setMediaQueryList] = useState<MediaQueryList | null>(null);
+
+  // Create a stable callback for the change handler
+  const handleChange = useCallback((event: MediaQueryListEvent) => {
+    setMatches(event.matches);
+    onChange?.(event.matches);
+  }, [onChange]);
+
+  // Set up the media query listener
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || disabled) return;
 
-    const mediaQuery = window.matchMedia(query);
-    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
+    let mql: MediaQueryList | null = null;
+    try {
+      mql = window.matchMedia(mediaQuery);
 
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, [query]);
+      if (mql) {
+        if (immediate) {
+          setMatches(mql.matches);
+        }
+        setMediaQueryList(mql);
+        mql.addEventListener('change', handleChange);
 
-  return matches;
+        return () => {
+          mql?.removeEventListener('change', handleChange);
+        };
+      }
+    } catch (error) {
+      console.warn(`Error setting up media query listener for: ${mediaQuery}`, error);
+    }
+  }, [mediaQuery, handleChange, disabled, immediate]);
+
+  return useMemo(() => ({
+    matches,
+    query: mediaQuery,
+    mediaQueryList,
+  }), [matches, mediaQuery, mediaQueryList]);
 } 
