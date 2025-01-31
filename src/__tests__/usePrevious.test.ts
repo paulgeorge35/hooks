@@ -15,164 +15,157 @@ afterEach(() => {
 describe("usePrevious", () => {
     test("should return undefined on first render", () => {
         const { result } = renderHook(() => usePrevious("initial"));
-        expect(result.current).toBeUndefined();
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
+    });
+
+    test("should handle includeInitial option", () => {
+        const { result } = renderHook(() => usePrevious("initial", { includeInitial: true }));
+        expect(result.current.previous).toEqual("initial");
+        expect(result.current.history).toEqual(["initial"]);
     });
 
     test("should return previous string value after update", () => {
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+        const { result, rerender } = renderHook(({ value }) => usePrevious(value, {
+            maxHistory: 2,
+        }), {
             initialProps: { value: "initial" }
         });
 
-        // First render should return undefined
-        expect(result.current).toBeUndefined();
+        // First render
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
         // Update the value
         rerender({ value: "updated" });
-
-        // Should now return the previous value
-        expect(result.current).toBe("initial");
+        expect(result.current.previous).toBe("initial");
+        expect(result.current.history).toEqual(["initial"]);
 
         // Update again
         rerender({ value: "final" });
-        expect(result.current).toBe("updated");
+        expect(result.current.previous).toBe("updated");
+        expect(result.current.history).toEqual(["updated", "initial"]);
     });
 
     test("should handle number values", () => {
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+        const { result, rerender } = renderHook(({ value }) => usePrevious(value, {
+            maxHistory: 2,
+        }), {
             initialProps: { value: 0 }
         });
 
-        expect(result.current).toBeUndefined();
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
         rerender({ value: 1 });
-        expect(result.current).toBe(0);
+        expect(result.current.previous).toBe(0);
+        expect(result.current.history).toEqual([0]);
 
         rerender({ value: -1 });
-        expect(result.current).toBe(1);
+        expect(result.current.previous).toBe(1);
+        expect(result.current.history).toEqual([1, 0]);
     });
 
     test("should handle boolean values", () => {
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+        const { result, rerender } = renderHook(({ value }) => usePrevious(value, {
+            maxHistory: 2,
+        }), {
             initialProps: { value: true }
         });
 
-        expect(result.current).toBeUndefined();
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
         rerender({ value: false });
-        expect(result.current).toBe(true);
+        expect(result.current.previous).toBe(true);
+        expect(result.current.history).toEqual([true]);
 
         rerender({ value: true });
-        expect(result.current).toBe(false);
+        expect(result.current.previous).toBe(false);
+        expect(result.current.history).toEqual([false, true]);
     });
 
     test("should handle object values", () => {
         const initialObject = { test: "value" };
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+        const { result, rerender } = renderHook(({ value }) => usePrevious(value, {
+            maxHistory: 3,
+            compare: (a, b) => Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(key => a[key] === b[key])
+        }), {
             initialProps: { value: initialObject }
         });
 
-        expect(result.current).toBeUndefined();
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
         const updatedObject = { test: "updated" };
         rerender({ value: updatedObject });
-        expect(result.current).toBe(initialObject);
+        expect(result.current.previous).toBe(initialObject);
+        expect(result.current.history).toEqual([initialObject]);
 
         const finalObject = { test: "final" };
         rerender({ value: finalObject });
-        expect(result.current).toBe(updatedObject);
+        expect(result.current.previous).toBe(updatedObject);
+        expect(result.current.history).toEqual([updatedObject, initialObject]);
     });
 
     test("should handle array values", () => {
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
+        const { result, rerender } = renderHook(({ value }) => usePrevious(value, {
+            maxHistory: 3,
+        }), {
             initialProps: { value: [1, 2, 3] }
         });
 
-        expect(result.current).toBeUndefined();
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
         rerender({ value: [4, 5, 6] });
-        expect(result.current).toEqual([1, 2, 3]);
+        expect(result.current.previous).toEqual([1, 2, 3]);
+        expect(result.current.history).toEqual([[1, 2, 3]]);
 
         rerender({ value: [7, 8, 9] });
-        expect(result.current).toEqual([4, 5, 6]);
+        expect(result.current.previous).toEqual([4, 5, 6]);
+        expect(result.current.history).toEqual([[4, 5, 6], [1, 2, 3]]);
     });
 
-    test("should handle null and undefined values", () => {
-        type NullableValue = string | null | undefined;
-        const { result, rerender } = renderHook(
-            ({ value }: { value: NullableValue }) => usePrevious(value),
-            { initialProps: { value: null } }
-        );
-
-        expect(result.current).toBeUndefined();
-
-        // @ts-ignore
-        rerender({ value: "something" });
-        expect(result.current).toBeNull();
-
-        // @ts-ignore
-        rerender({ value: undefined });
-        expect(result.current).toBe("something");
-
-        // @ts-ignore
-        rerender({ value: "final" });
-        expect(result.current).toBeUndefined();
-    });
-
-    test("should update previous value even if current value is the same", () => {
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
-            initialProps: { value: "test" }
+    test("should respect maxHistory option", () => {
+        const { result, rerender } = renderHook(({ value }) => usePrevious(value, { maxHistory: 3 }), {
+            initialProps: { value: 1 }
         });
 
-        expect(result.current).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
-        // Rerender with the same value
-        rerender({ value: "test" });
-        expect(result.current).toBe("test");
+        rerender({ value: 2 });
+        expect(result.current.history).toEqual([1]);
 
-        // Update to a different value
-        rerender({ value: "different" });
-        expect(result.current).toBe("test");
+        rerender({ value: 3 });
+        expect(result.current.history).toEqual([2, 1]);
 
-        // Rerender with the same value again
-        rerender({ value: "different" });
-        expect(result.current).toBe("different");
+        rerender({ value: 4 });
+        expect(result.current.history).toEqual([3, 2, 1]);
+
+        rerender({ value: 5 });
+        expect(result.current.history).toEqual([4, 3, 2]);
     });
 
-    test("should handle function values", () => {
-        const initialFn = () => "initial";
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
-            initialProps: { value: initialFn }
+    test("should handle custom compare function", () => {
+        const { result, rerender } = renderHook(({ value }) =>
+            usePrevious(value, {
+                compare: (a, b) => JSON.stringify(a) === JSON.stringify(b)
+            }), {
+            initialProps: { value: { id: 1, data: "test" } }
         });
 
-        expect(result.current).toBeUndefined();
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
-        const updatedFn = () => "updated";
-        rerender({ value: updatedFn });
-        expect(result.current).toBe(initialFn);
+        // Same data, different object reference
+        rerender({ value: { id: 1, data: "test" } });
+        expect(result.current.previous).toBeUndefined();
+        expect(result.current.history).toEqual([]);
 
-        const finalFn = () => "final";
-        rerender({ value: finalFn });
-        expect(result.current).toBe(updatedFn);
-    });
-
-    test("should maintain reference equality for unchanged values", () => {
-        const obj = { test: "value" };
-        const { result, rerender } = renderHook(({ value }) => usePrevious(value), {
-            initialProps: { value: obj }
-        });
-
-        expect(result.current).toBeUndefined();
-
-        // Update with a new object
-        const newObj = { test: "new value" };
-        rerender({ value: newObj });
-        const firstPrevious = result.current;
-        expect(firstPrevious).toBe(obj);
-
-        // Update with another new object
-        const finalObj = { test: "final value" };
-        rerender({ value: finalObj });
-        expect(result.current).toBe(newObj);
-        expect(result.current).not.toBe(firstPrevious);
+        // Different data
+        rerender({ value: { id: 1, data: "changed" } });
+        expect(result.current.previous).toEqual({ id: 1, data: "test" });
+        expect(result.current.history).toEqual([{ id: 1, data: "test" }]);
     });
 }); 

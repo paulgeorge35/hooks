@@ -333,12 +333,12 @@ import { usePrevious } from '@paulgeorge35/hooks';
 
 function Counter() {
   const [count, setCount] = useState(0);
-  const previousCount = usePrevious(count);
+  const {previous, history, clearHistory} = usePrevious(count);
 
   return (
     <div>
       <p>Current count: {count}</p>
-      <p>Previous count: {previousCount ?? 'No previous value'}</p>
+      <p>Previous count: {previous ?? 'No previous value'}</p>
       <button onClick={() => setCount(count + 1)}>Increment</button>
     </div>
   );
