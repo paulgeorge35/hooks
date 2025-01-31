@@ -16,8 +16,8 @@ describe("useWindowSize", () => {
     test("should initialize with current window dimensions", () => {
         // Mock initial window dimensions
         Object.defineProperties(window, {
-            innerWidth: { value: 1024 },
-            innerHeight: { value: 768 }
+            innerWidth: { value: 1024, configurable: true, writable: true },
+            innerHeight: { value: 768, configurable: true, writable: true }
         });
 
         const { result } = renderHook(() => useWindowSize());
@@ -26,11 +26,11 @@ describe("useWindowSize", () => {
         expect(result.current.height).toBe(768);
     });
 
-    test("should update on window resize", () => {
+    test("should update on window resize", async () => {
         // Set initial dimensions
         Object.defineProperties(window, {
-            innerWidth: { value: 1024 },
-            innerHeight: { value: 768 }
+            innerWidth: { value: 1024, configurable: true, writable: true },
+            innerHeight: { value: 768, configurable: true, writable: true }
         });
 
         const { result } = renderHook(() => useWindowSize());
@@ -41,13 +41,16 @@ describe("useWindowSize", () => {
 
         // Update window dimensions
         act(() => {
-            Object.defineProperties(window, {
-                innerWidth: { value: 1440 },
-                innerHeight: { value: 900 }
-            });
+            window.innerWidth = 1440;
+            window.innerHeight = 900;
 
             // Dispatch resize event
             window.dispatchEvent(new Event('resize'));
+        });
+
+        // Wait for state update
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 300)); // Increased timeout to account for debounce
         });
 
         // Check updated dimensions
@@ -55,11 +58,11 @@ describe("useWindowSize", () => {
         expect(result.current.height).toBe(900);
     });
 
-    test("should handle multiple resize events", () => {
+    test("should handle multiple resize events", async () => {
         // Set initial dimensions
         Object.defineProperties(window, {
-            innerWidth: { value: 1024 },
-            innerHeight: { value: 768 }
+            innerWidth: { value: 1024, configurable: true, writable: true },
+            innerHeight: { value: 768, configurable: true, writable: true }
         });
 
         const { result } = renderHook(() => useWindowSize());
@@ -73,11 +76,14 @@ describe("useWindowSize", () => {
 
         for (const { width, height } of dimensions) {
             act(() => {
-                Object.defineProperties(window, {
-                    innerWidth: { value: width },
-                    innerHeight: { value: height }
-                });
+                window.innerWidth = width;
+                window.innerHeight = height;
                 window.dispatchEvent(new Event('resize'));
+            });
+
+            // Wait for state update
+            await act(async () => {
+                await new Promise(resolve => setTimeout(resolve, 300)); // Increased timeout to account for debounce
             });
 
             expect(result.current.width).toBe(width);
@@ -85,11 +91,11 @@ describe("useWindowSize", () => {
         }
     });
 
-    test("should handle rapid resize events", () => {
+    test("should handle rapid resize events", async () => {
         // Set initial dimensions
         Object.defineProperties(window, {
-            innerWidth: { value: 1024 },
-            innerHeight: { value: 768 }
+            innerWidth: { value: 1024, configurable: true, writable: true },
+            innerHeight: { value: 768, configurable: true, writable: true }
         });
 
         const { result } = renderHook(() => useWindowSize());
@@ -97,13 +103,16 @@ describe("useWindowSize", () => {
         // Simulate rapid resize events
         for (let i = 0; i < 10; i++) {
             act(() => {
-                Object.defineProperties(window, {
-                    innerWidth: { value: 1024 + i * 100 },
-                    innerHeight: { value: 768 + i * 50 }
-                });
+                window.innerWidth = 1024 + i * 100;
+                window.innerHeight = 768 + i * 50;
                 window.dispatchEvent(new Event('resize'));
             });
         }
+
+        // Wait for final state update
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 300)); // Increased timeout to account for debounce
+        });
 
         // Should have the final dimensions
         expect(result.current.width).toBe(1924);  // 1024 + 900

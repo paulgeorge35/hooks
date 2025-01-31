@@ -1130,3 +1130,70 @@
     color: #666;
     font-size: 12px;
 }
+
+/* UseWindowSize Styles */
+.storybook-content-use-window-size {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.storybook-window-size-section {
+    margin-bottom: 24px;
+}
+
+.storybook-window-size-section h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.storybook-window-size-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #f8f8f8;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.storybook-window-size-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.storybook-window-size-item.active {
+    border-color: #4CAF50;
+    background-color: #E8F5E9;
+}
+
+.storybook-window-size-item .label {
+    font-weight: 500;
+    color: #666;
+}
+
+.storybook-window-size-item .value {
+    font-family: monospace;
+    color: #2196F3;
+    font-weight: 600;
+}
+
+.storybook-window-size-note {
+    margin-top: 24px;
+    padding: 12px;
+    background-color: #FFF3E0;
+    border-radius: 4px;
+    border-left: 4px solid #FF9800;
+}
+
+.storybook-window-size-note p {
+    margin: 0;
+    color: #795548;
+    font-size: 14px;
+}
