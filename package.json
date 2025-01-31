@@ -17,7 +17,8 @@
     "build": "bun run clean && bun run build:esm && bun run build:cjs",
     "prepare": "bun run build",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "bun test"
   },
   "type": "module",
   "peerDependencies": {
