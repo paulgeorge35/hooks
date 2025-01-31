@@ -490,9 +490,18 @@ function ChatComponent() {
 import { useWindowSize } from '@paulgeorge35/hooks';
 
 function Component() {
-  const { width, height } = useWindowSize();
+  const { width, height, isLandscape, isPortrait, aspectRatio } = useWindowSize({
+    debounceDelay: 250,
+    includeOrientation: true,
+  });
   
-  return <div>Window size: {width} x {height}</div>;
+  return (
+    <div>
+      <p>Window size: {width} x {height}</p>
+      <p>Orientation: {isLandscape ? 'Landscape' : isPortrait ? 'Portrait' : 'Unknown'}</p>
+      <p>Aspect ratio: {aspectRatio ? aspectRatio.toFixed(2) : 'N/A'}</p>
+    </div>
+  );
 }
 ```
 
