@@ -1,6 +1,6 @@
 {
   "name": "@paulgeorge35/hooks",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "A collection of custom hooks for React",
   "main": "./lib/index.js",
   "module": "./lib/esm/index.js",
