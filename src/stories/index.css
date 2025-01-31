@@ -12,22 +12,131 @@
 }
 
 .storybook-content-use-boolean {
-    border: 1px solid #ccc;
-    padding: 1rem;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.storybook-boolean-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.storybook-boolean-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: #343a40;
+}
+
+.storybook-boolean-status {
+    margin-bottom: 15px;
+    padding: 12px;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.storybook-boolean-indicator {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    align-items: center;
+    gap: 10px;
+}
 
-    & p {
-        font-size: 1rem;
-        font-weight: 700;
-    }
+.storybook-boolean-indicator .label {
+    font-weight: 500;
+    color: #495057;
+}
 
-    & #storybook-button-group {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-    }
+.storybook-boolean-indicator .value {
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.storybook-boolean-indicator .value.true {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.storybook-boolean-indicator .value.false {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.storybook-boolean-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.storybook-boolean-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.storybook-boolean-button.toggle {
+    background-color: #6c757d;
+}
+
+.storybook-boolean-button.toggle:hover {
+    background-color: #5a6268;
+}
+
+.storybook-boolean-button.enable {
+    background-color: #28a745;
+}
+
+.storybook-boolean-button.enable:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.storybook-boolean-button.disable {
+    background-color: #dc3545;
+}
+
+.storybook-boolean-button.disable:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+.storybook-boolean-button.set {
+    background-color: #007bff;
+}
+
+.storybook-boolean-button.set:hover {
+    background-color: #0056b3;
+}
+
+.storybook-boolean-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.storybook-boolean-note {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    color: #495057;
+}
+
+.storybook-boolean-note p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    font-style: italic;
 }
 
 .storybook-content-use-click-outside {
