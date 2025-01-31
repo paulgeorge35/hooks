@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export type WebSocketStatus = 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
+
+export type WebSocketError = {
+    type: 'connection' | 'message' | 'send';
+    message: string;
+    originalError: unknown;
+    timestamp: number;
+};
+
 /**
  * Return type for the useWebSocket hook
  * @template T The type of messages being sent/received through the WebSocket
@@ -8,9 +17,9 @@ export type UseWebSocket<T> = {
     /** Send a message through the WebSocket */
     send: (message: T) => void;
     /** Array of messages received through the WebSocket */
-    messages: T[];
+    messages: ReadonlyArray<T>;
     /** Current connection status of the WebSocket */
-    status: 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
+    status: WebSocketStatus;
     /** Manually initiate a connection */
     connect: () => void;
     /** Manually disconnect the WebSocket */
@@ -18,42 +27,42 @@ export type UseWebSocket<T> = {
     /** Clear the message history */
     clearMessages: () => void;
     /** Most recent error that occurred, if any */
-    lastError: Error | null;
-}
+    lastError: WebSocketError | null;
+    /** Whether the WebSocket is currently attempting to reconnect */
+    isReconnecting: boolean;
+    /** Number of reconnection attempts made */
+    reconnectAttempts: number;
+};
 
 /**
  * Configuration options for the useWebSocket hook
  * @template T The type of messages being sent/received
  */
-export type UseWebSocketsOptions<T> = {
-    /** Whether to automatically attempt reconnection on disconnect */
-    reconnect?: boolean;
-    /** Interval in milliseconds between reconnection attempts */
-    reconnectInterval?: number;
-    /** Maximum number of reconnection attempts */
-    maxRetries?: number;
-    /** Callback fired when the connection is established */
-    onOpen?: () => void;
-    /** Callback fired when a message is received */
-    onMessage?: (message: T) => void;
-    /** Callback fired when an error occurs */
-    onError?: (error: Error) => void;
-    /** Callback fired when the connection is closed */
-    onClose?: () => void;
-    /** Whether to automatically connect when the hook is initialized */
-    autoConnect?: boolean;
-}
-
-/**
- * Props for the useWebSocket hook
- * @template T The type of messages being sent/received
- */
 export type UseWebSocketProps<T> = {
-    /** WebSocket endpoint URL */
+    /** The WebSocket endpoint URL */
     url: string;
-    /** Configuration options */
-    options?: UseWebSocketsOptions<T>;
-}
+    /** Optional configuration options */
+    options?: {
+        /** Whether to automatically attempt reconnection on disconnect */
+        reconnect?: boolean;
+        /** Interval in milliseconds between reconnection attempts */
+        reconnectInterval?: number;
+        /** Maximum number of reconnection attempts */
+        maxRetries?: number;
+        /** Callback fired when the connection is established */
+        onOpen?: () => void;
+        /** Callback fired when a message is received */
+        onMessage?: (message: T) => void;
+        /** Callback fired when an error occurs */
+        onError?: (error: WebSocketError) => void;
+        /** Callback fired when the connection is closed */
+        onClose?: () => void;
+        /** Whether to automatically connect when the hook is initialized */
+        autoConnect?: boolean;
+        /** Custom message parser */
+        parseMessage?: (data: string) => T;
+    };
+};
 
 /**
  * A React hook for managing WebSocket connections with automatic reconnection and error handling
@@ -71,13 +80,16 @@ export type UseWebSocketProps<T> = {
  *   connect,
  *   disconnect,
  *   clearMessages,
- *   lastError
+ *   lastError,
+ *   isReconnecting,
+ *   reconnectAttempts
  * } = useWebSocket<MessageType>({
  *   url: 'ws://example.com',
  *   options: {
  *     autoConnect: true,
  *     reconnect: true,
- *     onMessage: (msg) => console.log('New message:', msg)
+ *     onMessage: (msg) => console.log('New message:', msg),
+ *     parseMessage: (data) => JSON.parse(data) as MessageType
  *   }
  * });
  * ```
@@ -96,22 +108,22 @@ export const useWebSocket = <T>({
         onError,
         onClose,
         autoConnect = false,
+        parseMessage = (data: string) => JSON.parse(data) as T,
     } = options;
 
     // State management
-    const [messages, setMessages] = useState<T[]>([]);
-    const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'reconnecting'>(
+    const [messages, setMessages] = useState<ReadonlyArray<T>>([]);
+    const [status, setStatus] = useState<WebSocketStatus>(
         autoConnect ? 'connecting' : 'disconnected'
     );
     const [socket, setSocket] = useState<WebSocket | null>(null);
-    const [lastError, setLastError] = useState<Error | null>(null);
+    const [lastError, setLastError] = useState<WebSocketError | null>(null);
+    const [reconnectAttempts, setReconnectAttempts] = useState(0);
     
     // Refs for managing reconnection without causing re-renders
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const reconnectCountRef = useRef(0);
     const mountedRef = useRef(true);
     const statusRef = useRef(status);
-    const isInitialMount = useRef(true);
 
     // Update status ref when status changes
     useEffect(() => {
@@ -123,6 +135,14 @@ export const useWebSocket = <T>({
         setMessages([]);
     }, []);
 
+    // Create error object helper
+    const createError = useCallback((type: WebSocketError['type'], message: string, originalError: unknown): WebSocketError => ({
+        type,
+        message,
+        originalError,
+        timestamp: Date.now(),
+    }), []);
+
     // Cleanup function to reset connection state
     const cleanup = useCallback(() => {
         if (reconnectTimerRef.current) {
@@ -133,14 +153,13 @@ export const useWebSocket = <T>({
             socket.close();
             setSocket(null);
         }
-        reconnectCountRef.current = 0;
+        setReconnectAttempts(0);
         setStatus('disconnected');
         onClose?.();
     }, [socket, onClose]);
 
     // Initialize a new WebSocket connection
     const connect = useCallback(() => {
-        // Don't attempt to connect if we're already connecting or reconnecting
         if (statusRef.current === 'connecting' || statusRef.current === 'reconnecting') {
             return;
         }
@@ -152,18 +171,22 @@ export const useWebSocket = <T>({
             const newSocket = new WebSocket(url);
             setSocket(newSocket);
         } catch (error) {
-            const wsError = new Error(`Failed to create WebSocket connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            const wsError = createError(
+                'connection',
+                `Failed to create WebSocket connection: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                error
+            );
             setLastError(wsError);
             setStatus('disconnected');
             onError?.(wsError);
         }
-    }, [url, onError, cleanup]);
+    }, [url, onError, cleanup, createError]);
 
     // Handle successful connection
     const handleOpen = useCallback(() => {
         if (!mountedRef.current) return;
         
-        reconnectCountRef.current = 0;
+        setReconnectAttempts(0);
         if (reconnectTimerRef.current) {
             clearTimeout(reconnectTimerRef.current);
             reconnectTimerRef.current = null;
@@ -178,27 +201,36 @@ export const useWebSocket = <T>({
         if (!mountedRef.current) return;
 
         try {
-            const message = JSON.parse(event.data) as T;
+            const message = parseMessage(event.data);
             setMessages(prev => [...prev, message]);
             onMessage?.(message);
         } catch (error) {
-            const wsError = new Error(`Failed to parse message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            const wsError = createError(
+                'message',
+                `Failed to parse message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                error
+            );
             setLastError(wsError);
             onError?.(wsError);
         }
-    }, [onMessage, onError]);
+    }, [onMessage, onError, parseMessage, createError]);
 
     // Handle WebSocket errors
     const handleError = useCallback((event: Event) => {
         if (!mountedRef.current) return;
 
-        const error = event instanceof ErrorEvent ? event.error : new Error('WebSocket error occurred');
+        const error = createError(
+            'connection',
+            event instanceof ErrorEvent ? event.message : 'WebSocket error occurred',
+            event
+        );
+
         if (statusRef.current !== 'reconnecting') {
             setStatus('disconnected');
             setLastError(error);
             onError?.(error);
         }
-    }, [onError]);
+    }, [onError, createError]);
 
     // Handle connection closure and reconnection
     const handleClose = useCallback(() => {
@@ -211,7 +243,7 @@ export const useWebSocket = <T>({
         }
 
         // Attempt reconnection if enabled and within retry limits
-        if (reconnect && reconnectCountRef.current < maxRetries) {
+        if (reconnect && reconnectAttempts < maxRetries) {
             // Don't set status to reconnecting if we're already in that state
             if (statusRef.current !== 'reconnecting') {
                 setStatus('reconnecting');
@@ -219,22 +251,19 @@ export const useWebSocket = <T>({
             
             reconnectTimerRef.current = setTimeout(() => {
                 if (mountedRef.current) {
-                    reconnectCountRef.current += 1;
+                    setReconnectAttempts(prev => prev + 1);
                     connect();
                 }
             }, reconnectInterval);
         }
-    }, [reconnect, maxRetries, reconnectInterval, connect, onClose]);
+    }, [reconnect, maxRetries, reconnectInterval, connect, onClose, reconnectAttempts]);
 
     // Set up initial connection
     useEffect(() => {
         mountedRef.current = true;
         
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            if (autoConnect) {
-                connect();
-            }
+        if (autoConnect) {
+            connect();
         }
 
         return () => {
@@ -262,7 +291,11 @@ export const useWebSocket = <T>({
 
     const send = useCallback((message: T) => {
         if (!socket || socket.readyState !== WebSocket.OPEN) {
-            const error = new Error('WebSocket is not connected');
+            const error = createError(
+                'send',
+                'WebSocket is not connected',
+                new Error('Socket not ready')
+            );
             setLastError(error);
             onError?.(error);
             return;
@@ -271,11 +304,15 @@ export const useWebSocket = <T>({
         try {
             socket.send(JSON.stringify(message));
         } catch (error) {
-            const wsError = new Error(`Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            const wsError = createError(
+                'send',
+                `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                error
+            );
             setLastError(wsError);
             onError?.(wsError);
         }
-    }, [socket, onError]);
+    }, [socket, onError, createError]);
 
     return {
         send,
@@ -285,5 +322,7 @@ export const useWebSocket = <T>({
         disconnect: cleanup,
         clearMessages,
         lastError,
+        isReconnecting: status === 'reconnecting',
+        reconnectAttempts,
     };
-}
+};
