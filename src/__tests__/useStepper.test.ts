@@ -13,170 +13,189 @@ afterEach(() => {
 
 describe("useStepper", () => {
     test("should initialize with default values", () => {
-        const { result } = renderHook(() => useStepper({ totalSteps: 3 }));
+        const { result } = renderHook(() => useStepper({ totalSteps: 5 }));
         
         expect(result.current.currentStep).toBe(0);
         expect(result.current.hasNext).toBe(true);
         expect(result.current.hasPrevious).toBe(false);
         expect(result.current.isFirst).toBe(true);
         expect(result.current.isLast).toBe(false);
+        expect(result.current.isValidating).toBe(false);
+        expect(result.current.error).toBeUndefined();
+        expect(result.current.progress).toBe(0);
     });
 
     test("should initialize with custom initial step", () => {
-        const { result } = renderHook(() => useStepper({ totalSteps: 3, initialStep: 1 }));
+        const { result } = renderHook(() => 
+            useStepper({ totalSteps: 5, initialStep: 2 })
+        );
         
-        expect(result.current.currentStep).toBe(1);
+        expect(result.current.currentStep).toBe(2);
         expect(result.current.hasNext).toBe(true);
         expect(result.current.hasPrevious).toBe(true);
-        expect(result.current.isFirst).toBe(false);
-        expect(result.current.isLast).toBe(false);
+        expect(result.current.progress).toBe(50);
     });
 
-    test("should handle next and previous navigation", async () => {
+    test("should handle next/previous navigation", async () => {
         const { result } = renderHook(() => useStepper({ totalSteps: 3 }));
-
-        // Go to next step
+        
         await act(async () => {
-            const success = await result.current.next();
-            expect(success).toBe(true);
+            await result.current.next();
         });
         expect(result.current.currentStep).toBe(1);
-
-        // Go to previous step
+        expect(result.current.progress).toBe(50);
+        
         await act(async () => {
-            const success = await result.current.previous();
-            expect(success).toBe(true);
+            await result.current.previous();
         });
         expect(result.current.currentStep).toBe(0);
+        expect(result.current.progress).toBe(0);
     });
 
-    test("should prevent navigation beyond bounds", async () => {
-        const { result } = renderHook(() => useStepper({ totalSteps: 2 }));
-
-        // Try to go previous from first step
-        await act(async () => {
-            const success = await result.current.previous();
-            expect(success).toBe(false);
+    test("should handle validation", async () => {
+        const validateStep = async (current: number) => ({
+            isValid: current !== 1,
+            error: current === 1 ? "Cannot leave step 1" : undefined
         });
-        expect(result.current.currentStep).toBe(0);
-
-        // Go to last step
-        await act(async () => {
-            const success = await result.current.next();
-            expect(success).toBe(true);
-        });
-
-        // Try to go next from last step
-        await act(async () => {
-            const success = await result.current.next();
-            expect(success).toBe(false);
-        });
-        expect(result.current.currentStep).toBe(1);
-    });
-
-    test("should handle step validation", async () => {
-        const validateStep = (step: number, direction: 'next' | 'previous') => {
-            // Only allow moving forward from step 0
-            return !(step === 0 && direction === 'next');
-        };
-
+        
         const { result } = renderHook(() => 
             useStepper({ totalSteps: 3, validateStep })
         );
-
-        // Try to move forward (should fail validation)
+        
         await act(async () => {
-            const success = await result.current.next();
-            expect(success).toBe(false);
+            await result.current.next();
         });
-        expect(result.current.currentStep).toBe(0);
-    });
-
-    test("should handle async validation", async () => {
-        const validateStep = async (step: number, direction: 'next' | 'previous') => {
-            await new Promise(resolve => setTimeout(resolve, 10));
-            return step !== 1 || direction === 'previous';
-        };
-
-        const { result } = renderHook(() => 
-            useStepper({ totalSteps: 3, validateStep })
-        );
-
-        // Go to step 1
-        await act(async () => {
-            const success = await result.current.next();
-            expect(success).toBe(true);
-        });
-
-        // Try to go to step 2 (should fail validation)
+        expect(result.current.currentStep).toBe(1);
+        
         await act(async () => {
             const success = await result.current.next();
             expect(success).toBe(false);
         });
         expect(result.current.currentStep).toBe(1);
+        expect(result.current.error).toBe("Cannot leave step 1");
+    });
 
-        // Go back to step 0 (should pass validation)
+    test("should handle URL persistence", async () => {
+        const { result } = renderHook(() => 
+            useStepper({ totalSteps: 3, persistInUrl: true, urlParam: 'step' })
+        );
+        
         await act(async () => {
-            const success = await result.current.previous();
+            const success = await result.current.next();
             expect(success).toBe(true);
+        });
+        
+        const url = new URL(window.location.href);
+        expect(url.searchParams.get('step')).toBe('1');
+    });
+
+    test("should handle direct navigation with allowJumps", async () => {
+        const { result } = renderHook(() => 
+            useStepper({ totalSteps: 5, allowJumps: true })
+        );
+        
+        await act(async () => {
+            const success = await result.current.goTo(3);
+            expect(success).toBe(true);
+        });
+        expect(result.current.currentStep).toBe(3);
+        expect(result.current.progress).toBe(75);
+    });
+
+    test("should prevent direct navigation without allowJumps", async () => {
+        const { result } = renderHook(() => 
+            useStepper({ totalSteps: 5, allowJumps: false })
+        );
+        
+        await act(async () => {
+            const success = await result.current.goTo(3);
+            expect(success).toBe(false);
         });
         expect(result.current.currentStep).toBe(0);
     });
 
-    test("should handle goTo navigation", async () => {
-        const { result } = renderHook(() => useStepper({ totalSteps: 4 }));
-
-        // Go to valid step
+    test("should handle callbacks", async () => {
+        let lastChange = { step: -1, prevStep: -1 };
+        let validationFailCount = 0;
+        
+        const { result } = renderHook(() => useStepper({
+            totalSteps: 3,
+            validateStep: async () => ({ isValid: false, error: "Test error" }),
+            onChange: (step, prevStep) => {
+                lastChange = { step, prevStep };
+            },
+            onValidationFail: () => {
+                validationFailCount++;
+            }
+        }));
+        
         await act(async () => {
-            const success = await result.current.goTo(2);
-            expect(success).toBe(true);
+            await result.current.next();
         });
-        expect(result.current.currentStep).toBe(2);
-
-        // Try to go to invalid step
-        await act(async () => {
-            const success = await result.current.goTo(5);
-            expect(success).toBe(false);
-        });
-        expect(result.current.currentStep).toBe(2);
+        
+        expect(validationFailCount).toBe(1);
+        expect(result.current.error).toBe("Test error");
     });
 
     test("should reset to initial step", async () => {
         const { result } = renderHook(() => 
-            useStepper({ totalSteps: 3, initialStep: 1 })
+            useStepper({ totalSteps: 5, initialStep: 2 })
         );
-
-        // Move to last step
+        
         await act(async () => {
             const success = await result.current.next();
             expect(success).toBe(true);
         });
-        expect(result.current.currentStep).toBe(2);
-
-        // Reset to initial step
-        act(() => {
+        expect(result.current.currentStep).toBe(3);
+        
+        await act(async () => {
             result.current.reset();
+            // No need to await reset as it's synchronous
         });
-        expect(result.current.currentStep).toBe(1);
+        expect(result.current.currentStep).toBe(2);
+        expect(result.current.error).toBeUndefined();
+        expect(result.current.progress).toBe(50);
     });
 
-    test("should handle boundary conditions", () => {
-        // Test with minimum steps
-        const { result: minResult } = renderHook(() => 
-            useStepper({ totalSteps: 1 })
-        );
-        expect(minResult.current.hasNext).toBe(false);
-        expect(minResult.current.hasPrevious).toBe(false);
-        expect(minResult.current.isFirst).toBe(true);
-        expect(minResult.current.isLast).toBe(true);
-
-        // Test with large number of steps
-        const { result: maxResult } = renderHook(() => 
-            useStepper({ totalSteps: 1000, initialStep: 500 })
-        );
-        expect(maxResult.current.hasNext).toBe(true);
-        expect(maxResult.current.hasPrevious).toBe(true);
-        expect(maxResult.current.isFirst).toBe(false);
-        expect(maxResult.current.isLast).toBe(false);
+    test("should handle boundary conditions", async () => {
+        const { result } = renderHook(() => useStepper({ totalSteps: 3 }));
+        
+        // Test first step conditions
+        expect(result.current.isFirst).toBe(true);
+        expect(result.current.isLast).toBe(false);
+        expect(result.current.progress).toBe(0);
+        
+        // Move to last step
+        await act(async () => {
+            const nextResult = await result.current.next();
+            expect(nextResult).toBe(true);
+        });
+        
+        await act(async () => {
+            const nextResult = await result.current.next();
+            expect(nextResult).toBe(true);
+        });
+        
+        // Verify last step conditions
+        expect(result.current.currentStep).toBe(2);
+        expect(result.current.isFirst).toBe(false);
+        expect(result.current.isLast).toBe(true);
+        expect(result.current.progress).toBe(100);
+        
+        // Verify cannot go beyond last step
+        await act(async () => {
+            const success = await result.current.next();
+            expect(success).toBe(false);
+        });
+        expect(result.current.currentStep).toBe(2);
+        
+        // Verify can go back from last step
+        await act(async () => {
+            const success = await result.current.previous();
+            expect(success).toBe(true);
+        });
+        expect(result.current.currentStep).toBe(1);
+        expect(result.current.isFirst).toBe(false);
+        expect(result.current.isLast).toBe(false);
     });
 }); 
