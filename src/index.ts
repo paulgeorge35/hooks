@@ -9,6 +9,8 @@ export { useNumber, type UseNumber, type UseNumberActions, type UseNumberProps }
 export { usePasswordStrength, type PasswordCriteria, type PasswordStrength, type PasswordStrengthOptions, type UsePasswordStrength } from './usePasswordStrength';
 export { usePrevious } from './usePrevious';
 export { useQueue, type UseQueue } from './useQueue';
+export { useResizeObserver, type UseResizeObserver, type UseResizeObserverOptions } from './useResizeObserver';
+export { useStack, type UseStack, type UseStackOptions } from './useStack';
 export { useStepper, type UseStepper, type UseStepperActions, type UseStepperOptions } from './useStepper';
 export { useWebSocket, type UseWebSocket, type UseWebSocketProps } from './useWebSocket';
 export { useWindowSize, type WindowSize } from './useWindowSize';
