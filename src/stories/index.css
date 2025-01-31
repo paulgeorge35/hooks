@@ -504,3 +504,120 @@
     font-size: 0.875rem;
     line-height: 1.5;
 }
+
+.storybook-content-use-previous {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.storybook-previous-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.storybook-previous-input {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+}
+
+.storybook-previous-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.storybook-previous-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #dc3545;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.storybook-previous-button:hover {
+    background-color: #c82333;
+}
+
+.storybook-previous-submit-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #28a745;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.storybook-previous-submit-button:hover {
+    background-color: #218838;
+}
+
+.storybook-previous-status {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.storybook-previous-value {
+    font-weight: 600;
+    color: #495057;
+}
+
+.storybook-previous-status-text {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.storybook-previous-status-text.changed {
+    color: #28a745;
+}
+
+.storybook-previous-history {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.storybook-previous-history h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: #343a40;
+}
+
+.storybook-previous-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.storybook-previous-history-item {
+    padding: 8px 12px;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #495057;
+}
+
+.storybook-previous-history-empty {
+    padding: 12px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    background-color: #ffffff;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+}
