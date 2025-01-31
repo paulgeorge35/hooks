@@ -26,6 +26,8 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 - `usePasswordStrength`: Calculate password strength and criteria
 - `usePrevious`: Access the previous value of a state or prop
 - `useQueue`: Manage a queue with enqueue, dequeue, and reset operations
+- `useResizeObserver`: Observe element size changes
+- `useStack`: Manage a stack with push, pop, and reset operations
 - `useStepper`: Manage a stepper with customizable steps and actions
 - `useWebSocket`: Manage WebSocket connections with automatic reconnection
 - `useWindowSize`: Track window dimensions reactively
@@ -385,6 +387,63 @@ function TaskManager() {
         </button>
         <button onClick={reset}>Clear All Tasks</button>
       </div>
+    </div>
+  );
+}
+```
+
+### useResizeObserver Hook
+
+```typescript
+import { useResizeObserver } from '@paulgeorge35/hooks';
+
+function ResizableComponent() {
+  const { ref, dimensions, isObserving } = useResizeObserver<HTMLDivElement>({
+    immediate: true,
+    useBorderBox: true,
+    debounceDelay: 250,
+  });
+
+  return (
+    <div>
+      <div ref={ref} className="resizable-component">
+        Resize me!
+      </div>
+      <p>Is observing: {isObserving ? 'Yes' : 'No'}</p>
+      <p>Width: {dimensions.width}px</p>
+      <p>Height: {dimensions.height}px</p>
+      <p>Border Box Size: {dimensions.borderBoxSize.map((size) => `${size.inlineSize}x${size.blockSize}`).join(', ')}</p>
+      <p>Content Box Size: {dimensions.contentBoxSize.map((size) => `${size.inlineSize}x${size.blockSize}`).join(', ')}</p>
+      <p>Device Pixel Content Box Size: {dimensions.devicePixelContentBoxSize.map((size) => `${size.inlineSize}x${size.blockSize}`).join(', ')}</p>
+    </div>
+  );
+}
+```
+
+### useStack Hook
+
+```typescript
+import { useStack } from '@paulgeorge35/hooks';
+
+function StackComponent() {
+  const { stack, push, pop, reset } = useStack<number>({
+    initialStack: [1, 2, 3],
+    maxSize: 10,
+    onPush: (items) => console.log('Pushed:', items),
+    onPop: (items) => console.log('Popped:', items)
+  });
+
+  return (
+    <div>
+      <h2>Stack ({stack.length})</h2>
+      <div className="stack-list">
+        {stack.map((item, index) => (
+          <div key={index}>{item}</div>
+        ))}
+      </div>
+      <button onClick={() => push(stack.length + 1)}>Push</button>
+      <button onClick={pop}>Pop</button>
+      <button onClick={reset}>Reset</button>
     </div>
   );
 }
