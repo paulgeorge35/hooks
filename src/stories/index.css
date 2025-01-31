@@ -838,3 +838,176 @@
     color: #666;
     font-size: 12px;
 }
+
+.storybook-content-use-stepper {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.storybook-stepper-progress {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    align-items: start;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.storybook-stepper-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    column-span: 1;
+}
+
+.storybook-stepper-step-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.storybook-stepper-step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.storybook-stepper-step.active .storybook-stepper-step-number {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.storybook-stepper-step.complete .storybook-stepper-step-number {
+    background-color: #198754;
+    color: white;
+}
+
+.storybook-stepper-step-title {
+    font-size: 14px;
+    color: #6c757d;
+    transition: color 0.3s ease;
+    text-align: center;
+}
+
+.storybook-stepper-step.active .storybook-stepper-step-title {
+    color: #0d6efd;
+    /* font-weight: 600; */
+}
+
+.storybook-stepper-step.complete .storybook-stepper-step-title {
+    color: #198754;
+}
+
+.storybook-stepper-step-line {
+    position: absolute;
+    top: 16px;
+    left: calc((100% + 32px) / 2);
+    width: 100%;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: 0;
+}
+
+.storybook-stepper-step.complete .storybook-stepper-step-line {
+    background-color: #198754;
+}
+
+.storybook-stepper-content {
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.storybook-stepper-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.storybook-stepper-value {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.storybook-stepper-controls {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.storybook-stepper-button {
+    padding: 8px 16px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.storybook-stepper-button:hover:not(:disabled) {
+    background-color: #0b5ed7;
+}
+
+.storybook-stepper-button:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.storybook-stepper-jump {
+    display: flex;
+    gap: 8px;
+}
+
+.storybook-stepper-jump-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    background-color: white;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.storybook-stepper-jump-button:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+.storybook-stepper-jump-button.active {
+    border-color: #0d6efd;
+    background-color: #0d6efd;
+    color: white;
+}
+
+.storybook-stepper-reset {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
