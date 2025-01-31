@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.DEPLOY_KEY }}
+          fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,13 +41,13 @@ jobs:
 
       - name: Build Storybook
         run: bun run build-storybook
-
+          
       - name: Determine version bump
         id: version-bump
         run: |
           # Get all commit messages since the last tag
-          commits=$(git log $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD --format=%B)
-          
+          version=$(node -p -e "require('./package.json').version")
+          commits=$(git log "$version"..HEAD --pretty=%B)
           # Log all commit messages for debugging
           echo "Commit messages found:"
           echo "$commits"
