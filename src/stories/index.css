@@ -1288,3 +1288,102 @@
     color: #795548;
     font-size: 14px;
 }
+
+/* Visibility Story Styles */
+.storybook-content-use-visibility {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.storybook-visibility-container {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f5f5f5;
+}
+
+.storybook-visibility-spacer {
+    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #666;
+}
+
+.storybook-visibility-target {
+    padding: 20px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.storybook-visibility-target.visible {
+    background: #f0f9ff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.storybook-visibility-content {
+    text-align: center;
+}
+
+.storybook-visibility-content h4 {
+    margin: 0 0 16px;
+    color: #1f2937;
+}
+
+.storybook-visibility-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.storybook-visibility-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.storybook-visibility-item .label {
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.storybook-visibility-item .value {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.storybook-visibility-item .value.visible {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.storybook-visibility-item .value.hidden {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.storybook-visibility-item .value.active {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.storybook-visibility-item .value.inactive {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.storybook-visibility-note {
+    margin-top: 16px;
+    padding: 12px;
+    background: #fffbeb;
+    border-radius: 6px;
+    color: #92400e;
+    font-size: 0.9em;
+}

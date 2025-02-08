@@ -12,6 +12,6 @@ export { useQueue, type UseQueue } from './useQueue';
 export { useResizeObserver, type UseResizeObserver, type UseResizeObserverOptions } from './useResizeObserver';
 export { useStack, type UseStack, type UseStackOptions } from './useStack';
 export { useStepper, type UseStepper, type UseStepperActions, type UseStepperOptions } from './useStepper';
+export { useVisibility, type UseVisibility, type UseVisibilityCallback, type UseVisibilityOptions } from './useVisibility';
 export { useWebSocket, type UseWebSocket, type UseWebSocketProps } from './useWebSocket';
 export { useWindowSize, type WindowSize } from './useWindowSize';
-

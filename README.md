@@ -29,9 +29,9 @@ A lightweight TypeScript library that provides a set of commonly used React hook
 - `useResizeObserver`: Observe element size changes
 - `useStack`: Manage a stack with push, pop, and reset operations
 - `useStepper`: Manage a stepper with customizable steps and actions
+- `useVisibility`: Track element visibility in the viewport
 - `useWebSocket`: Manage WebSocket connections with automatic reconnection
 - `useWindowSize`: Track window dimensions reactively
-
 ## Prerequisites
 
 - React 16.8+ (Hooks support)
@@ -483,6 +483,29 @@ function WizardComponent() {
           Next
         </button>
       </div>
+    </div>
+  );
+}
+```
+
+### useVisibility Hook
+
+```typescript
+import { useVisibility } from '@paulgeorge35/hooks';
+
+function Component() {
+  const [isVisible, isTracking, ref] = useVisibility({
+    delay: 500,
+  },(params) => {
+    if(params.isVisible) {
+      console.log('visible');
+    }
+  });
+
+  return (
+    <div ref={ref}>
+      <p>Is visible: {isVisible ? 'Yes' : 'No'}</p>
+      <p>Is tracking: {isTracking ? 'Yes' : 'No'}</p>
     </div>
   );
 }
