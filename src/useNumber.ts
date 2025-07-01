@@ -186,7 +186,15 @@ export const useNumber = (
     // Set value with validation
     const setValue = useCallback((newValue: number | ((prev: number) => number)) => {
         setInternalValue(prev => {
-            const nextValue = clamp(typeof newValue === 'function' ? newValue(prev) : newValue);
+            const rawValue = typeof newValue === 'function' ? newValue(prev) : newValue;
+            
+            // Validate that the value is a valid number
+            if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) {
+                console.warn('useNumber: Invalid value provided, ignoring update:', rawValue);
+                return prev;
+            }
+            
+            const nextValue = clamp(rawValue);
             if (nextValue !== prev) {
                 onChange?.(nextValue, prev);
             }

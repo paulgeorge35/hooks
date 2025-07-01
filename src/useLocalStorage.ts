@@ -56,27 +56,28 @@ export function useLocalStorage<T>(
     }
   });
 
-  // Memoize the setValue function to prevent unnecessary re-renders
+    // Memoize the setValue function to prevent unnecessary re-renders
   const setValue = useCallback((value: T | ((prev: T) => T)) => {
-    try {
-      const nextValue = value instanceof Function ? value(storedValue) : value;
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(nextValue));
+    setStoredValue((prevValue: T) => {
+      const nextValue = value instanceof Function ? value(prevValue) : value;
+      
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(nextValue));
+        }
+        setError(null);
+      } catch (error) {
+        // Set error but still update state
+        setError({
+          type: 'write',
+          message: `Error setting localStorage key "${key}"`,
+          originalError: error
+        });
       }
-      setStoredValue(nextValue);
-      setError(null);
-    } catch (error) {
-      // Set error but still update state
-      setError({
-        type: 'write',
-        message: `Error setting localStorage key "${key}"`,
-        originalError: error
-      });
-      // Try to update state even if localStorage fails
-      const nextValue = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(nextValue);
-    }
-  }, [key, storedValue]);
+      
+      return nextValue;
+    });
+  }, [key]);
 
   // Handle storage events from other tabs/windows
   useEffect(() => {
