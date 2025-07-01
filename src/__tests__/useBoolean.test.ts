@@ -1,5 +1,5 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { useBoolean } from "../useBoolean";
 
@@ -27,12 +27,14 @@ describe("useBoolean", () => {
 
         expect(result.current.value).toBe(false);
 
-        result.current.toggle();
-        await new Promise(resolve => setTimeout(resolve, 0));
+        act(() => {
+            result.current.toggle();
+        });
         expect(result.current.value).toBe(true);
 
-        result.current.toggle();
-        await new Promise(resolve => setTimeout(resolve, 100));
+        act(() => {
+            result.current.toggle();
+        });
         expect(result.current.value).toBe(false);
     });
 
@@ -41,16 +43,19 @@ describe("useBoolean", () => {
 
         expect(result.current.value).toBe(false);
 
-        result.current.setTrue();
-        await new Promise(resolve => setTimeout(resolve, 0));
+        act(() => {
+            result.current.setTrue();
+        });
         expect(result.current.value).toBe(true);
 
-        result.current.setFalse();
-        await new Promise(resolve => setTimeout(resolve, 0));
+        act(() => {
+            result.current.setFalse();
+        });
         expect(result.current.value).toBe(false);
 
-        result.current.setFalse();
-        await new Promise(resolve => setTimeout(resolve, 0));
+        act(() => {
+            result.current.setFalse();
+        });
         expect(result.current.value).toBe(false);
     });
 
@@ -59,12 +64,14 @@ describe("useBoolean", () => {
 
         expect(result.current.value).toBe(false);
 
-        result.current.setValue(true);
-        await new Promise(resolve => setTimeout(resolve, 0));
+        act(() => {
+            result.current.setValue(true);
+        });
         expect(result.current.value).toBe(true);
 
-        result.current.setValue(prev => !prev);
-        await new Promise(resolve => setTimeout(resolve, 0));
+        act(() => {
+            result.current.setValue(prev => !prev);
+        });
         expect(result.current.value).toBe(false);
     });
 });

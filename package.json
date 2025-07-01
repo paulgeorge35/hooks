@@ -26,22 +26,22 @@
     "react-dom": ">16.8.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^3.2.4",
-    "@happy-dom/global-registrator": "^17.0.0",
+    "@chromatic-com/storybook": "^3.2.7",
+    "@happy-dom/global-registrator": "^17.6.3",
     "@storybook/addon-essentials": "8.5.3",
     "@storybook/addon-interactions": "8.5.3",
     "@storybook/blocks": "8.5.3",
     "@storybook/react": "8.5.3",
     "@storybook/react-vite": "8.5.3",
     "@storybook/test": "8.5.3",
-    "@testing-library/react": "^16.2.0",
-    "react": "^19.0.0",
-    "@types/react": "^19.0.8",
-    "react-dom": "^19.0.0",
+    "@testing-library/react": "^16.3.0",
+    "react": "^19.1.0",
+    "@types/react": "^19.1.8",
+    "react-dom": "^19.1.0",
     "rimraf": "^6.0.1",
     "storybook": "8.5.3",
-    "typescript": "^5.7.3",
-    "@types/bun": "^1.2.2"
+    "typescript": "^5.8.3",
+    "@types/bun": "^1.2.17"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
