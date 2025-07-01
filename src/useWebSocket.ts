@@ -243,20 +243,25 @@ export const useWebSocket = <T>({
         }
 
         // Attempt reconnection if enabled and within retry limits
-        if (reconnect && reconnectAttempts < maxRetries) {
-            // Don't set status to reconnecting if we're already in that state
-            if (statusRef.current !== 'reconnecting') {
-                setStatus('reconnecting');
-            }
-            
-            reconnectTimerRef.current = setTimeout(() => {
-                if (mountedRef.current) {
-                    setReconnectAttempts(prev => prev + 1);
-                    connect();
+        // Use functional update to get the current reconnectAttempts value
+        setReconnectAttempts((currentAttempts: number) => {
+            if (reconnect && currentAttempts < maxRetries) {
+                // Don't set status to reconnecting if we're already in that state
+                if (statusRef.current !== 'reconnecting') {
+                    setStatus('reconnecting');
                 }
-            }, reconnectInterval);
-        }
-    }, [reconnect, maxRetries, reconnectInterval, connect, onClose, reconnectAttempts]);
+                
+                reconnectTimerRef.current = setTimeout(() => {
+                    if (mountedRef.current) {
+                        connect();
+                    }
+                }, reconnectInterval);
+                
+                return currentAttempts + 1;
+            }
+            return currentAttempts;
+        });
+    }, [reconnect, maxRetries, reconnectInterval, connect, onClose]);
 
     // Set up initial connection
     useEffect(() => {
